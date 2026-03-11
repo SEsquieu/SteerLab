@@ -387,6 +387,11 @@ button {
   cursor: pointer;
 }
 
+.worked-example-link:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .worked-example-link.active {
   border-color: #d2a85c;
   background: rgba(210, 168, 92, 0.14);
@@ -399,6 +404,28 @@ button {
 .worked-example-content {
   white-space: pre-wrap;
   line-height: 1.55;
+}
+
+.compare-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.compare-card {
+  border: 1px solid rgba(231, 236, 239, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+  background: #121b21;
+}
+
+.compare-card h4,
+.compare-reflection h4 {
+  margin-top: 0;
+}
+
+.compare-reflection {
+  margin-top: 18px;
 }
 
 .artifact-card {
@@ -454,6 +481,10 @@ textarea::placeholder {
   }
 
   .workspace-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .compare-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

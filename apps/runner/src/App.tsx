@@ -14,7 +14,8 @@ const storageKey = (
     | "reviewerNotes"
     | "reviewerOutcome"
     | "reviewerChecklist"
-    | "trainingHintsShown",
+    | "trainingHintsShown"
+    | "trainingReflection",
 ) =>
   `steerlab:${challengeId}:${field}`;
 
@@ -168,6 +169,7 @@ export default function App() {
   const [reviewerNotes, setReviewerNotes] = useState("");
   const [reviewerChecklist, setReviewerChecklist] = useState<Record<string, boolean>>({});
   const [trainingHintsShown, setTrainingHintsShown] = useState(0);
+  const [trainingReflection, setTrainingReflection] = useState("");
   const [selectedWorkedExampleHref, setSelectedWorkedExampleHref] = useState<string | null>(null);
   const [workspaceStatus, setWorkspaceStatus] = useState<{
     tone: "success" | "error";
@@ -214,6 +216,9 @@ export default function App() {
       window.localStorage.getItem(storageKey(selected.id, "trainingHintsShown")) ?? "0",
     );
     setTrainingHintsShown(Number.isFinite(savedHintsShown) ? savedHintsShown : 0);
+    setTrainingReflection(
+      window.localStorage.getItem(storageKey(selected.id, "trainingReflection")) ?? "",
+    );
     setReviewerOutcome(window.localStorage.getItem(storageKey(selected.id, "reviewerOutcome")) ?? "");
     setReviewerAssessment(
       window.localStorage.getItem(storageKey(selected.id, "reviewerAssessment")) ?? "",
@@ -249,6 +254,12 @@ export default function App() {
       );
     }
   }, [trainingHintsShown, selected]);
+
+  useEffect(() => {
+    if (selected) {
+      window.localStorage.setItem(storageKey(selected.id, "trainingReflection"), trainingReflection);
+    }
+  }, [trainingReflection, selected]);
 
   useEffect(() => {
     if (selected) {
@@ -290,6 +301,7 @@ export default function App() {
       notes,
       response,
       trainingHintsShown,
+      trainingReflection,
       reviewerOutcome,
       reviewerAssessment,
       reviewerNotes,
@@ -327,6 +339,7 @@ export default function App() {
         notes?: string;
         response?: string;
         trainingHintsShown?: number;
+        trainingReflection?: string;
         reviewerOutcome?: string;
         reviewerAssessment?: string;
         reviewerNotes?: string;
@@ -376,6 +389,9 @@ export default function App() {
         ? payload.trainingHintsShown
         : 0,
     );
+    setTrainingReflection(
+      typeof payload.trainingReflection === "string" ? payload.trainingReflection : "",
+    );
     setReviewerOutcome(typeof payload.reviewerOutcome === "string" ? payload.reviewerOutcome : "");
     setReviewerAssessment(
       typeof payload.reviewerAssessment === "string" ? payload.reviewerAssessment : "",
@@ -409,6 +425,7 @@ export default function App() {
       return groups;
     }, new Map<string, typeof checklistItems>()),
   );
+  const hasAttemptedTrainingResponse = response.trim().length > 0;
 
   return (
     <div className="app-shell">
@@ -699,8 +716,14 @@ export default function App() {
             <section className="panel">
               <div className="section-heading">
                 <h3>Worked Examples</h3>
-                <span className="source-path">Use after attempting your own response</span>
+                <span className="source-path">Unlock after attempting your own response</span>
               </div>
+              {!hasAttemptedTrainingResponse && (
+                <p className="source-path">
+                  Write a practice response first. Worked examples are meant for comparison, not as
+                  a starting point.
+                </p>
+              )}
               <div className="worked-examples">
                 {workedExampleLinks.map((link) => (
                   <button
@@ -712,6 +735,7 @@ export default function App() {
                         : "worked-example-link"
                     }
                     onClick={() => setSelectedWorkedExampleHref(link.href)}
+                    disabled={!hasAttemptedTrainingResponse}
                   >
                     {link.label}
                   </button>
@@ -722,7 +746,7 @@ export default function App() {
             {selectedWorkedExample && selectedWorkedExampleContent && (
               <section className="panel">
                 <div className="section-heading">
-                  <h3>{selectedWorkedExample.label}</h3>
+                  <h3>Compare And Reflect</h3>
                   <button
                     type="button"
                     className="tool-button"
@@ -731,7 +755,28 @@ export default function App() {
                     Hide example
                   </button>
                 </div>
-                <pre className="worked-example-content">{selectedWorkedExampleContent}</pre>
+                <p className="source-path">{selectedWorkedExample.label}</p>
+                <div className="compare-grid">
+                  <section className="compare-card">
+                    <h4>Your current response</h4>
+                    <pre className="worked-example-content">{response}</pre>
+                  </section>
+                  <section className="compare-card">
+                    <h4>Worked example</h4>
+                    <pre className="worked-example-content">{selectedWorkedExampleContent}</pre>
+                  </section>
+                </div>
+                <section className="compare-reflection">
+                  <h4>Reflection After Comparison</h4>
+                  <p className="source-path">
+                    What did you miss, where did you over-index, and what would you revise now?
+                  </p>
+                  <textarea
+                    value={trainingReflection}
+                    onChange={(event) => setTrainingReflection(event.target.value)}
+                    placeholder="Capture what changed after comparison: missing constraints, stronger structure, better validation, or tradeoffs you would now handle differently."
+                  />
+                </section>
               </section>
             )}
           </>

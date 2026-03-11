@@ -48,7 +48,7 @@ Status: partially complete.
 Status: partially complete.
 
 - deepen guided reflection and thinking checklists
-- expand worked example and compare-against-example flows
+- deepen compare-and-reflect workflows around worked examples
 - improve practice-oriented challenge navigation
 - support learning loops without weakening challenge realism
 - add stronger training-specific scaffolds while keeping shared challenge content intact

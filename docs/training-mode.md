@@ -33,6 +33,7 @@ Training Mode prioritizes:
 - explicit tradeoff awareness
 - learning loops
 - comparison with worked examples
+- reflection after comparison
 
 Where Evaluation Mode asks how well someone performed, Training Mode asks how to help someone improve.
 
@@ -59,6 +60,7 @@ Examples of training-specific features include:
 - guided hints
 - progressive reveal of hints and examples
 - worked example comparisons
+- compare-and-reflect workflows after an attempted response
 - coaching scaffolds
 - model-backed scenario generation and coaching under explicit rules
 
@@ -77,6 +79,8 @@ Training Mode should reinforce habits such as:
 The goal is not prompt fluency by itself. The goal is better engineering judgment under leverage.
 
 In the current reference runner, Training Mode intentionally avoids reviewer-facing artifacts such as rubrics and assessment framing. It should feel like guided practice, not like evaluation with softer wording.
+
+The current runner also treats worked examples as something to compare against after an attempt, not something to read first. That ordering matters. The goal is to strengthen self-correction, not replace first-pass reasoning.
 
 ## Boundaries
 
