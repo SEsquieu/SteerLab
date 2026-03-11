@@ -1,0 +1,19 @@
+2026-03-11T14:07:41Z processor/webhooks INFO delivery_attempt event_id=evt_912 order_id=ord_4401 attempt=1 pod=api-2
+2026-03-11T14:07:41Z api/webhooks INFO payment_succeeded_received event_id=evt_912 order_id=ord_4401 pod=api-2
+2026-03-11T14:07:41Z api/webhooks INFO mark_order_paid_started event_id=evt_912 order_id=ord_4401 pod=api-2
+2026-03-11T14:07:42Z api/webhooks INFO create_shipment_started event_id=evt_912 order_id=ord_4401 pod=api-2
+2026-03-11T14:07:42Z api/webhooks ERROR create_shipment_failed event_id=evt_912 order_id=ord_4401 pod=api-2 error=warehouse_timeout
+2026-03-11T14:07:42Z processor/webhooks WARN delivery_retry_scheduled event_id=evt_912 order_id=ord_4401 reason=http_500
+2026-03-11T14:07:49Z processor/webhooks INFO delivery_attempt event_id=evt_912 order_id=ord_4401 attempt=2 pod=api-5
+2026-03-11T14:07:49Z api/webhooks INFO payment_succeeded_received event_id=evt_912 order_id=ord_4401 pod=api-5
+2026-03-11T14:07:49Z api/webhooks INFO mark_order_paid_started event_id=evt_912 order_id=ord_4401 pod=api-5
+2026-03-11T14:07:49Z api/webhooks INFO create_shipment_started event_id=evt_912 order_id=ord_4401 pod=api-5
+2026-03-11T14:07:49Z api/webhooks INFO create_shipment_succeeded event_id=evt_912 order_id=ord_4401 shipment_id=shp_70021 pod=api-5
+2026-03-11T14:07:49Z api/webhooks INFO audit_row_inserted event_id=evt_912 order_id=ord_4401 pod=api-5
+2026-03-11T14:07:54Z processor/webhooks INFO delivery_attempt event_id=evt_912 order_id=ord_4401 attempt=3 pod=api-1
+2026-03-11T14:07:54Z api/webhooks INFO payment_succeeded_received event_id=evt_912 order_id=ord_4401 pod=api-1
+2026-03-11T14:07:54Z api/webhooks INFO mark_order_paid_started event_id=evt_912 order_id=ord_4401 pod=api-1
+2026-03-11T14:07:54Z api/webhooks INFO create_shipment_started event_id=evt_912 order_id=ord_4401 pod=api-1
+2026-03-11T14:07:54Z api/webhooks INFO create_shipment_succeeded event_id=evt_912 order_id=ord_4401 shipment_id=shp_70022 pod=api-1
+2026-03-11T14:07:54Z api/webhooks INFO audit_row_inserted event_id=evt_912 order_id=ord_4401 pod=api-1
+2026-03-11T14:07:54Z processor/webhooks INFO delivery_acknowledged event_id=evt_912 order_id=ord_4401 attempt=3 status=200
