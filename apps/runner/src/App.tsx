@@ -9,6 +9,15 @@ import type {
 import { workedExampleContentByHref } from "./workedExamples";
 
 type AppMode = "evaluation" | "training";
+type TrainingComparisonReflectionField = "missed" | "overIndexed" | "keep" | "revise";
+type TrainingComparisonReflection = Record<TrainingComparisonReflectionField, string>;
+
+const emptyTrainingComparisonReflection: TrainingComparisonReflection = {
+  missed: "",
+  overIndexed: "",
+  keep: "",
+  revise: "",
+};
 
 const storageKey = (
   challengeId: string,
@@ -21,7 +30,9 @@ const storageKey = (
     | "reviewerChecklist"
     | "trainingHintsShown"
     | "trainingReflection"
-    | "trainingCheckpointResponses",
+    | "trainingCheckpointResponses"
+    | "trainingComparisonReflection"
+    | "trainingRevisedResponse",
 ) =>
   `steerlab:${challengeId}:${field}`;
 
@@ -232,6 +243,27 @@ function getTrainingCheckpoints(challenge: LoadedChallenge): ChallengeTrainingCh
   return byArchetype[challenge.archetype] ?? [];
 }
 
+function normalizeTrainingComparisonReflection(
+  value: unknown,
+): TrainingComparisonReflection {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return emptyTrainingComparisonReflection;
+  }
+
+  return {
+    missed: typeof (value as Record<string, unknown>).missed === "string" ? (value as Record<string, string>).missed : "",
+    overIndexed:
+      typeof (value as Record<string, unknown>).overIndexed === "string"
+        ? (value as Record<string, string>).overIndexed
+        : "",
+    keep: typeof (value as Record<string, unknown>).keep === "string" ? (value as Record<string, string>).keep : "",
+    revise:
+      typeof (value as Record<string, unknown>).revise === "string"
+        ? (value as Record<string, string>).revise
+        : "",
+  };
+}
+
 export default function App() {
   const [appMode, setAppMode] = useState<AppMode>("evaluation");
   const [selectedId, setSelectedId] = useState<string>(challenges[0]?.id ?? "");
@@ -248,6 +280,9 @@ export default function App() {
   const [trainingCheckpointResponses, setTrainingCheckpointResponses] = useState<Record<string, string>>(
     {},
   );
+  const [trainingComparisonReflection, setTrainingComparisonReflection] =
+    useState<TrainingComparisonReflection>(emptyTrainingComparisonReflection);
+  const [trainingRevisedResponse, setTrainingRevisedResponse] = useState("");
   const [selectedWorkedExampleHref, setSelectedWorkedExampleHref] = useState<string | null>(null);
   const [workspaceStatus, setWorkspaceStatus] = useState<{
     tone: "success" | "error";
@@ -315,6 +350,21 @@ export default function App() {
     } catch {
       setTrainingCheckpointResponses({});
     }
+    try {
+      const savedComparisonReflection = window.localStorage.getItem(
+        storageKey(selected.id, "trainingComparisonReflection"),
+      );
+      setTrainingComparisonReflection(
+        normalizeTrainingComparisonReflection(
+          savedComparisonReflection ? JSON.parse(savedComparisonReflection) : null,
+        ),
+      );
+    } catch {
+      setTrainingComparisonReflection(emptyTrainingComparisonReflection);
+    }
+    setTrainingRevisedResponse(
+      window.localStorage.getItem(storageKey(selected.id, "trainingRevisedResponse")) ?? "",
+    );
     setReviewerOutcome(window.localStorage.getItem(storageKey(selected.id, "reviewerOutcome")) ?? "");
     setReviewerAssessment(
       window.localStorage.getItem(storageKey(selected.id, "reviewerAssessment")) ?? "",
@@ -368,6 +418,24 @@ export default function App() {
 
   useEffect(() => {
     if (selected) {
+      window.localStorage.setItem(
+        storageKey(selected.id, "trainingComparisonReflection"),
+        JSON.stringify(trainingComparisonReflection),
+      );
+    }
+  }, [trainingComparisonReflection, selected]);
+
+  useEffect(() => {
+    if (selected) {
+      window.localStorage.setItem(
+        storageKey(selected.id, "trainingRevisedResponse"),
+        trainingRevisedResponse,
+      );
+    }
+  }, [trainingRevisedResponse, selected]);
+
+  useEffect(() => {
+    if (selected) {
       window.localStorage.setItem(storageKey(selected.id, "reviewerOutcome"), reviewerOutcome);
     }
   }, [reviewerOutcome, selected]);
@@ -408,6 +476,8 @@ export default function App() {
       trainingHintsShown,
       trainingReflection,
       trainingCheckpointResponses,
+      trainingComparisonReflection,
+      trainingRevisedResponse,
       reviewerOutcome,
       reviewerAssessment,
       reviewerNotes,
@@ -447,6 +517,8 @@ export default function App() {
         trainingHintsShown?: number;
         trainingReflection?: string;
         trainingCheckpointResponses?: Record<string, string>;
+        trainingComparisonReflection?: Partial<TrainingComparisonReflection>;
+        trainingRevisedResponse?: string;
         reviewerOutcome?: string;
         reviewerAssessment?: string;
         reviewerNotes?: string;
@@ -511,6 +583,12 @@ export default function App() {
           )
         : {},
     );
+    setTrainingComparisonReflection(
+      normalizeTrainingComparisonReflection(payload.trainingComparisonReflection),
+    );
+    setTrainingRevisedResponse(
+      typeof payload.trainingRevisedResponse === "string" ? payload.trainingRevisedResponse : "",
+    );
     setReviewerOutcome(typeof payload.reviewerOutcome === "string" ? payload.reviewerOutcome : "");
     setReviewerAssessment(
       typeof payload.reviewerAssessment === "string" ? payload.reviewerAssessment : "",
@@ -545,6 +623,9 @@ export default function App() {
     }, new Map<string, typeof checklistItems>()),
   );
   const hasAttemptedTrainingResponse = response.trim().length > 0;
+  const hasStartedRevision =
+    trainingRevisedResponse.trim().length > 0 ||
+    Object.values(trainingComparisonReflection).some((value) => value.trim().length > 0);
 
   return (
     <div className="app-shell">
@@ -917,12 +998,86 @@ export default function App() {
                 <section className="compare-reflection">
                   <h4>Reflection After Comparison</h4>
                   <p className="source-path">
-                    What did you miss, where did you over-index, and what would you revise now?
+                    Record what changed after comparison, then revise your response instead of stopping at insight.
                   </p>
+                  <div className="reflection-grid">
+                    <section className="reflection-card">
+                      <h5>What you missed</h5>
+                      <textarea
+                        value={trainingComparisonReflection.missed}
+                        onChange={(event) =>
+                          setTrainingComparisonReflection((current) => ({
+                            ...current,
+                            missed: event.target.value,
+                          }))
+                        }
+                        placeholder="Capture missing constraints, evidence, or failure modes."
+                      />
+                    </section>
+                    <section className="reflection-card">
+                      <h5>Where you over-indexed</h5>
+                      <textarea
+                        value={trainingComparisonReflection.overIndexed}
+                        onChange={(event) =>
+                          setTrainingComparisonReflection((current) => ({
+                            ...current,
+                            overIndexed: event.target.value,
+                          }))
+                        }
+                        placeholder="Note places where you chased the wrong detail or overcomplicated the answer."
+                      />
+                    </section>
+                    <section className="reflection-card">
+                      <h5>What to keep</h5>
+                      <textarea
+                        value={trainingComparisonReflection.keep}
+                        onChange={(event) =>
+                          setTrainingComparisonReflection((current) => ({
+                            ...current,
+                            keep: event.target.value,
+                          }))
+                        }
+                        placeholder="Preserve the parts of your original response that still hold up."
+                      />
+                    </section>
+                    <section className="reflection-card">
+                      <h5>What to revise</h5>
+                      <textarea
+                        value={trainingComparisonReflection.revise}
+                        onChange={(event) =>
+                          setTrainingComparisonReflection((current) => ({
+                            ...current,
+                            revise: event.target.value,
+                          }))
+                        }
+                        placeholder="Name the structural changes you want in the revised response."
+                      />
+                    </section>
+                  </div>
                   <textarea
                     value={trainingReflection}
                     onChange={(event) => setTrainingReflection(event.target.value)}
-                    placeholder="Capture what changed after comparison: missing constraints, stronger structure, better validation, or tradeoffs you would now handle differently."
+                    placeholder="Optional synthesis: summarize the main lesson from the comparison in your own words."
+                  />
+                </section>
+                <section className="compare-reflection">
+                  <div className="section-heading">
+                    <h4>Revised Response</h4>
+                    <button
+                      type="button"
+                      className="tool-button"
+                      onClick={() => setTrainingRevisedResponse(response)}
+                    >
+                      {hasStartedRevision ? "Replace with current response" : "Start from current response"}
+                    </button>
+                  </div>
+                  <p className="source-path">
+                    Turn the comparison into a stronger second pass. Keep this separate from your first draft.
+                  </p>
+                  <textarea
+                    value={trainingRevisedResponse}
+                    onChange={(event) => setTrainingRevisedResponse(event.target.value)}
+                    placeholder="Write the revised version you would give after reflecting on the worked example."
                   />
                 </section>
               </section>
