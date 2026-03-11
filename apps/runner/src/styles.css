@@ -88,6 +88,26 @@ button {
   margin: 0 0 16px;
 }
 
+.mode-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mode-switch-button {
+  border-radius: 12px;
+  border: 1px solid rgba(231, 236, 239, 0.1);
+  background: #131c22;
+  color: #e7ecef;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.mode-switch-button.active {
+  border-color: #d2a85c;
+  background: #203039;
+}
+
 .mode-toggle,
 .tool-button {
   border-radius: 12px;
@@ -105,9 +125,15 @@ button {
 }
 
 .mode-toggle:hover,
+.mode-switch-button:hover,
 .tool-button:hover,
 .challenge-link:hover {
   background: #1a242b;
+}
+
+.mode-toggle:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .hidden-input {
@@ -303,6 +329,27 @@ button {
   gap: 10px;
   align-items: start;
   color: #d9e1e5;
+}
+
+.worked-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.worked-example-link {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(231, 236, 239, 0.1);
+  background: #121b21;
+  color: #dfe7eb;
+  padding: 10px 14px;
+  text-decoration: none;
+}
+
+.worked-example-link:hover {
+  background: #1a242b;
 }
 
 .artifact-card {

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { challenges } from "./challenges";
 import type { LoadedChallenge } from "./types";
 
+type AppMode = "evaluation" | "training";
+
 const storageKey = (
   challengeId: string,
   field:
@@ -18,7 +20,68 @@ function formatLabel(value: string) {
   return value.replace(/-/g, " ");
 }
 
+function getTrainingPrompts(challenge: LoadedChallenge) {
+  const archetypePrompts: Record<string, string[]> = {
+    "broken-system-investigation": [
+      "What are the observed facts versus your current inferences?",
+      "What failure modes best explain the supplied evidence, and what evidence pushes against them?",
+      "What would you mitigate immediately before you try to redesign anything?",
+    ],
+    "architecture-thought-experiment": [
+      "What constraints matter most here, and which are easiest to miss on a first pass?",
+      "Which tradeoffs are structural versus simply implementation details?",
+      "What would a safe first version look like, and what should be intentionally deferred?",
+    ],
+    "tool-steering-challenge": [
+      "What parts of this task should AI accelerate, and what parts require direct human judgment?",
+      "How will you constrain scope before asking a model for help?",
+      "What will you verify before trusting generated output or generated reasoning?",
+    ],
+  };
+
+  return archetypePrompts[challenge.archetype] ?? [
+    "What is the core engineering judgment this challenge is trying to surface?",
+    "What assumptions are you making, and how would you test them?",
+    "What would a stronger response do that a shallow response would miss?",
+  ];
+}
+
+function getTrainingChecklist(challenge: LoadedChallenge) {
+  return [
+    `State the problem in your own words before solving it`,
+    `Name the most important constraints explicitly`,
+    `Use the supplied artifacts instead of relying on generic advice`,
+    `Call out uncertainty or missing information honestly`,
+    ...(challenge.archetype === "tool-steering-challenge"
+      ? [`Explain how AI output would be validated before trust is granted`]
+      : []),
+    ...(challenge.archetype === "architecture-thought-experiment"
+      ? [`Separate what is needed now from what should be deferred`]
+      : []),
+    ...(challenge.archetype === "broken-system-investigation"
+      ? [`Distinguish immediate mitigation from durable prevention`]
+      : []),
+  ];
+}
+
+function getWorkedExampleLinks(challenge: LoadedChallenge) {
+  const byArchetype: Record<string, { label: string; href: string }[]> = {
+    "broken-system-investigation": [
+      { label: "Broken System example review", href: "/docs/example-review.md" },
+    ],
+    "architecture-thought-experiment": [
+      { label: "Architecture example review", href: "/docs/example-review-architecture.md" },
+    ],
+    "tool-steering-challenge": [
+      { label: "Tool Steering example review", href: "/docs/example-review-tool-steering.md" },
+    ],
+  };
+
+  return byArchetype[challenge.archetype] ?? [];
+}
+
 export default function App() {
+  const [appMode, setAppMode] = useState<AppMode>("evaluation");
   const [selectedId, setSelectedId] = useState<string>(challenges[0]?.id ?? "");
   const selected = challenges.find((challenge) => challenge.id === selectedId) as LoadedChallenge;
   const [notes, setNotes] = useState("");
@@ -51,6 +114,9 @@ export default function App() {
       group: "Weak rubric cues",
     })),
   ];
+  const trainingPrompts = getTrainingPrompts(selected);
+  const trainingChecklist = getTrainingChecklist(selected);
+  const workedExampleLinks = getWorkedExampleLinks(selected);
 
   useEffect(() => {
     if (!selected) {
@@ -120,6 +186,7 @@ export default function App() {
     const exportedAt = new Date().toISOString();
     const payload = {
       challengeId: selected.id,
+      appMode,
       exportedAt,
       notes,
       response,
@@ -155,6 +222,7 @@ export default function App() {
       const source = await file.text();
       payload = JSON.parse(source) as {
         challengeId?: string;
+        appMode?: AppMode;
         exportedAt?: string;
         notes?: string;
         response?: string;
@@ -199,6 +267,7 @@ export default function App() {
       return;
     }
 
+    setAppMode(payload.appMode === "training" ? "training" : "evaluation");
     setNotes(typeof payload.notes === "string" ? payload.notes : "");
     setResponse(typeof payload.response === "string" ? payload.response : "");
     setReviewerOutcome(typeof payload.reviewerOutcome === "string" ? payload.reviewerOutcome : "");
@@ -247,10 +316,27 @@ export default function App() {
         <div className="challenge-count">{challenges.length} seed challenges</div>
 
         <div className="toolbar">
+          <div className="mode-switch" role="tablist" aria-label="Workspace mode">
+            <button
+              type="button"
+              className={appMode === "evaluation" ? "mode-switch-button active" : "mode-switch-button"}
+              onClick={() => setAppMode("evaluation")}
+            >
+              Evaluation
+            </button>
+            <button
+              type="button"
+              className={appMode === "training" ? "mode-switch-button active" : "mode-switch-button"}
+              onClick={() => setAppMode("training")}
+            >
+              Training
+            </button>
+          </div>
           <button
             type="button"
             className={reviewerMode ? "mode-toggle active" : "mode-toggle"}
             onClick={() => setReviewerMode((current) => !current)}
+            disabled={appMode !== "evaluation"}
           >
             {reviewerMode ? "Reviewer Mode On" : "Reviewer Mode Off"}
           </button>
@@ -308,6 +394,7 @@ export default function App() {
           <h2>{selected.title}</h2>
           <p className="hero-description">{selected.description}</p>
           <div className="meta-row">
+            <span>{formatLabel(appMode)} mode</span>
             <span>{formatLabel(selected.category)}</span>
             <span>{selected.difficulty}</span>
             <span>{selected.estimated_time_minutes} minutes</span>
@@ -385,24 +472,69 @@ export default function App() {
 
         <section className="workspace-grid">
           <section className="panel">
-            <h3>Candidate Notes</h3>
+            <h3>{appMode === "training" ? "Learning Notes" : "Candidate Notes"}</h3>
             <textarea
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
-              placeholder="Capture hypotheses, tradeoffs, missing data, and working notes."
+              placeholder={
+                appMode === "training"
+                  ? "Capture observations, assumptions, tradeoffs, and what you are learning."
+                  : "Capture hypotheses, tradeoffs, missing data, and working notes."
+              }
             />
           </section>
           <section className="panel">
-            <h3>Draft Response</h3>
+            <h3>{appMode === "training" ? "Practice Response" : "Draft Response"}</h3>
             <textarea
               value={response}
               onChange={(event) => setResponse(event.target.value)}
-              placeholder="Write the response you would submit for review."
+              placeholder={
+                appMode === "training"
+                  ? "Write your current thinking before comparing it with examples or future coaching."
+                  : "Write the response you would submit for review."
+              }
             />
           </section>
         </section>
 
-        {reviewerMode && (
+        {appMode === "training" && (
+          <>
+            <section className="workspace-grid">
+              <section className="panel">
+                <h3>Reflection Prompts</h3>
+                <ul>
+                  {trainingPrompts.map((prompt) => (
+                    <li key={prompt}>{prompt}</li>
+                  ))}
+                </ul>
+              </section>
+              <section className="panel">
+                <h3>Thinking Checklist</h3>
+                <ul>
+                  {trainingChecklist.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </section>
+            </section>
+
+            <section className="panel">
+              <div className="section-heading">
+                <h3>Worked Examples</h3>
+                <span className="source-path">Use after attempting your own response</span>
+              </div>
+              <div className="worked-examples">
+                {workedExampleLinks.map((link) => (
+                  <a key={link.href} className="worked-example-link" href={link.href} target="_blank" rel="noreferrer">
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+
+        {appMode === "evaluation" && reviewerMode && (
           <>
             <section className="panel">
               <div className="section-heading">
