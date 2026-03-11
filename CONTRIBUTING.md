@@ -134,6 +134,20 @@ Keep the implementation hackable. Prefer local-first simplicity unless added com
 3. Explain the reasoning behind structural changes.
 4. Update docs alongside schema or challenge changes.
 
+## Commit Hygiene
+
+Keep commit history legible.
+
+Preferred patterns:
+
+- commit each meaningful change separately
+- separate philosophy or documentation changes from runner or tooling changes when practical
+- keep schema and validation changes isolated
+- keep challenge additions in their own commits when possible
+- avoid catch-all "misc" commits except for purely mechanical cleanup
+
+This is a guideline, not a rigid rule. The goal is to make the repository easier to review, discuss, and evolve in public.
+
 ## Development
 
 Install the runner dependencies:
