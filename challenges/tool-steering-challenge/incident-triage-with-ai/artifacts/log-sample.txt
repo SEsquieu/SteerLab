@@ -1,0 +1,4 @@
+2026-03-02T07:11:03Z ERROR request failed route=/v1/invoices status=502 upstream=billing-api trace=tr_1092
+2026-03-02T07:11:04Z WARN retry scheduled route=/v1/invoices attempt=1 trace=tr_1092
+2026-03-02T07:11:07Z ERROR request failed route=/v1/invoices status=502 upstream=billing-api trace=tr_1093
+2026-03-02T07:11:09Z WARN deployment marker service=api-gateway revision=2026.03.02.4

@@ -1,0 +1,45 @@
+id: broken-system-investigation-webhook-retry-storm
+title: Trace a webhook retry storm causing duplicate shipments
+archetype: broken-system-investigation
+category: payments-integrations
+description: Diagnose why a payment webhook integration started creating duplicate downstream shipment requests.
+difficulty: advanced
+estimated_time_minutes: 60
+tags:
+  - idempotency
+  - integrations
+  - incident-analysis
+context: |
+  An order platform sends shipment requests when it receives successful payment webhooks from a payment processor.
+  After a network incident, warehouse teams reported duplicate shipments for some orders.
+  The integration team believes the payment processor retried old events aggressively, but the fulfillment team thinks the webhook handler is not truly idempotent.
+  You have a webhook handler excerpt, event delivery logs, and a persistence note.
+supplied_artifacts:
+  - path: artifacts/webhook-handler.ts
+    kind: code
+    purpose: Simplified webhook processing path
+  - path: artifacts/delivery.log
+    kind: log
+    purpose: Payment webhook delivery excerpt
+  - path: artifacts/db-note.md
+    kind: markdown
+    purpose: Notes on persistence and constraints
+candidate_instructions:
+  - Diagnose the most likely reason duplicate shipments were created.
+  - Explain how the evidence supports your conclusion.
+  - Propose a safe incident mitigation and a permanent fix.
+  - Identify any gaps in the current observability or data model.
+evaluation_signals:
+  - Checks both processor retry behavior and application-side idempotency boundaries.
+  - Notices ordering, acknowledgement, and transactional boundary issues.
+  - Suggests fixes that prevent duplicate side effects, not just duplicate webhook rows.
+  - Describes how to validate the fix.
+rubric:
+  strong:
+    - Identifies the missing idempotency boundary around shipment creation.
+    - Explains why retries became harmful instead of benign.
+    - Proposes transactional or deduplication improvements with verification steps.
+  weak:
+    - Blames only the payment processor retries.
+    - Ignores how downstream actions are triggered.
+

@@ -1,0 +1,44 @@
+id: broken-system-investigation-cache-stampede-catalog-api
+title: Diagnose a cache stampede in the catalog API
+archetype: broken-system-investigation
+category: caching
+description: Investigate why catalog latency and database saturation spiked after a seemingly small cache configuration change.
+difficulty: intermediate
+estimated_time_minutes: 45
+tags:
+  - incident-analysis
+  - performance
+  - backend
+context: |
+  The catalog API serves product details to both the web storefront and mobile clients.
+  At 09:05 UTC, p95 latency rose from 120ms to 2.1s and the primary database CPU hit 95%.
+  A deployment happened at 08:58 UTC, but the release note says the only behavior change was a cache TTL adjustment.
+  You have a simplified cache wrapper, a log excerpt, and a metrics summary.
+supplied_artifacts:
+  - path: artifacts/cache.ts
+    kind: code
+    purpose: Simplified cache access path in the request flow
+  - path: artifacts/incident.log
+    kind: log
+    purpose: Service log excerpt during the incident
+  - path: artifacts/metrics.md
+    kind: markdown
+    purpose: Key metric changes and timestamps
+candidate_instructions:
+  - Identify the most likely root cause.
+  - Explain the causal chain using the supplied evidence.
+  - Suggest one immediate mitigation and one durable fix.
+  - Note what additional data you would want before closing the incident.
+evaluation_signals:
+  - Connects latency and database load to cache behavior rather than generic traffic growth.
+  - Recognizes synchronized expirations or missing request coalescing as likely mechanisms.
+  - Separates short-term mitigation from long-term prevention.
+  - Avoids unsupported certainty when evidence is incomplete.
+rubric:
+  strong:
+    - Builds a coherent explanation across code, logs, and metrics.
+    - Proposes practical mitigations such as jitter, stale-while-revalidate, or single-flight behavior.
+  weak:
+    - Focuses only on scaling the database.
+    - Ignores the deploy clue and the request-path cache pattern.
+

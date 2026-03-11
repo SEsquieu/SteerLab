@@ -1,0 +1,29 @@
+id: architecture-thought-experiment-example-name
+title: Replace with a concise architecture scenario title
+archetype: architecture-thought-experiment
+category: replace-with-topic
+description: One-sentence summary of the design problem.
+difficulty: intermediate
+estimated_time_minutes: 60
+tags:
+  - design
+context: |
+  Describe the current system, the new requirement, and the operational or product constraints.
+  Make the tradeoffs real.
+supplied_artifacts:
+  - path: artifacts/system-overview.md
+    kind: markdown
+    purpose: Current system description and constraints
+candidate_instructions:
+  - Propose an approach.
+  - Explain key tradeoffs and risks.
+  - Describe migration, rollout, or ownership implications.
+evaluation_signals:
+  - Surfaces meaningful constraints before proposing a design.
+  - Explains tradeoffs rather than listing components.
+rubric:
+  strong:
+    - Matches the design to the team and system context.
+  weak:
+    - Treats the problem as a stack-selection exercise.
+

@@ -1,0 +1,42 @@
+id: tool-steering-challenge-incident-triage-with-ai
+title: Steer an AI assistant during a live incident triage without outsourcing judgment
+archetype: tool-steering-challenge
+category: incident-operations
+description: Explain how you would use AI during a production incident while preserving rigor, privacy, and operator trust.
+difficulty: advanced
+estimated_time_minutes: 40
+tags:
+  - ai-collaboration
+  - incidents
+  - operations
+context: |
+  You are the primary engineer on call for a B2B API.
+  Error rate and latency are rising after a deployment, executives are asking for status, and a teammate suggests using an AI assistant to summarize logs and propose hypotheses.
+  The team is open to this, but there are concerns about hallucinated root causes, privacy, and premature confidence.
+  This scenario asks how you would use AI in the loop while keeping incident handling disciplined.
+supplied_artifacts:
+  - path: artifacts/incident-constraints.md
+    kind: markdown
+    purpose: Operational and communication constraints
+  - path: artifacts/log-sample.txt
+    kind: log
+    purpose: Small representative incident excerpt
+candidate_instructions:
+  - Describe how you would use AI during this incident, if at all.
+  - Give example prompts or workflows you would use to extract value safely.
+  - Explain what information you would withhold, sanitize, or verify before acting.
+  - Describe how you would communicate AI-derived hypotheses to the rest of the team.
+evaluation_signals:
+  - Recognizes that incident response needs evidence discipline and clear ownership.
+  - Uses AI for bounded support tasks rather than decisive root-cause claims.
+  - Addresses privacy, security, and false-confidence risks.
+  - Shows how AI output would be verified before operational action.
+rubric:
+  strong:
+    - Uses AI selectively for summarization, query formulation, or alternate hypothesis generation.
+    - Clearly separates observed facts from AI-generated suggestions.
+    - Preserves human accountability for decisions and communication.
+  weak:
+    - Treats AI output as authoritative incident analysis.
+    - Ignores data-handling and trust concerns.
+

@@ -1,0 +1,12 @@
+{
+  "name": "steerlab",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Open-source exploration of AI-era engineering evaluation.",
+  "scripts": {
+    "dev": "npm --prefix apps/runner run dev",
+    "build": "npm --prefix apps/runner run build",
+    "preview": "npm --prefix apps/runner run preview",
+    "validate:challenges": "node scripts/validate-challenges.mjs"
+  }
+}

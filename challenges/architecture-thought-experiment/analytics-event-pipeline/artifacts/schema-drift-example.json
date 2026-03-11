@@ -1,0 +1,22 @@
+{
+  "examples": [
+    {
+      "event_name": "checkout_completed",
+      "payload": {
+        "plan": "pro",
+        "amount_usd": 49,
+        "user_id": "u_182"
+      }
+    },
+    {
+      "event_name": "checkout_completed",
+      "payload": {
+        "tier": "pro",
+        "amount": "49.00",
+        "account_id": "acct_182",
+        "coupon": true
+      }
+    }
+  ]
+}
+

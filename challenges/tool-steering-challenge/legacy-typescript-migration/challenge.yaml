@@ -1,0 +1,41 @@
+id: tool-steering-challenge-legacy-typescript-migration
+title: Use AI tools to plan and execute a safe slice of a legacy TypeScript migration
+archetype: tool-steering-challenge
+category: frontend-migration
+description: Show how you would steer AI assistance on a messy but common migration task.
+difficulty: intermediate
+estimated_time_minutes: 50
+tags:
+  - ai-collaboration
+  - prompt-steering
+  - refactoring
+context: |
+  A frontend team has a 6-year-old React codebase with weak typing, inconsistent patterns, and frequent regressions during refactors.
+  You are asked to migrate one high-churn module to stricter TypeScript settings over the next sprint.
+  The team allows AI coding tools, but they have seen generated changes introduce subtle runtime bugs and overbroad edits.
+  This scenario is about how you would use AI assistance responsibly, not about pretending to work without it.
+supplied_artifacts:
+  - path: artifacts/module-summary.md
+    kind: markdown
+    purpose: Description of the module and current pain points
+  - path: artifacts/component-example.tsx
+    kind: code
+    purpose: Representative example of the current code quality
+candidate_instructions:
+  - Describe how you would break the migration into safe increments.
+  - Show the kinds of prompts or instructions you would give an AI tool.
+  - Explain how you would constrain scope, verify output, and catch subtle regressions.
+  - Provide examples of what you would not delegate blindly to AI.
+evaluation_signals:
+  - Treats AI as an accelerator inside a controlled workflow rather than a source of authority.
+  - Uses scoped prompts, explicit acceptance criteria, and verification steps.
+  - Recognizes migration risks such as type lies, widened surface area, and behavior drift.
+  - Demonstrates judgment about which decisions require human review.
+rubric:
+  strong:
+    - "Provides a concrete steering loop: inspect, instruct, verify, narrow, repeat."
+    - Anticipates how generated code can pass type checks while still being wrong.
+    - Uses tests, diff review, and incremental rollout as safeguards.
+  weak:
+    - Describes AI use in vague terms.
+    - Assumes stricter typing automatically makes the migration safe.

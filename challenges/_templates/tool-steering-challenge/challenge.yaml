@@ -1,0 +1,29 @@
+id: tool-steering-challenge-example-name
+title: Replace with a concise tool steering scenario title
+archetype: tool-steering-challenge
+category: replace-with-topic
+description: One-sentence summary of the AI-assisted engineering task.
+difficulty: intermediate
+estimated_time_minutes: 45
+tags:
+  - ai-collaboration
+context: |
+  Describe the task, why AI use is relevant, and what makes validation important.
+  Keep the signal on engineering judgment rather than prompt theatrics.
+supplied_artifacts:
+  - path: artifacts/task-context.md
+    kind: markdown
+    purpose: Task context and constraints
+candidate_instructions:
+  - Describe how you would use AI assistance.
+  - Show how you would constrain and verify outputs.
+  - Explain what you would keep under direct human review.
+evaluation_signals:
+  - Uses AI inside a bounded workflow with validation discipline.
+  - Distinguishes useful leverage from blind delegation.
+rubric:
+  strong:
+    - Explains context-setting, scope control, and verification clearly.
+  weak:
+    - Treats AI output as trustworthy by default.
+

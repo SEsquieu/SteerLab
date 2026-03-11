@@ -1,0 +1,42 @@
+id: architecture-thought-experiment-feature-flag-migration
+title: Plan a migration from code-based flags to dynamic flag management
+archetype: architecture-thought-experiment
+category: platform-architecture
+description: Design a migration path for a growing product team that has outgrown hard-coded feature flags.
+difficulty: intermediate
+estimated_time_minutes: 60
+tags:
+  - migration
+  - rollout-safety
+  - platform
+context: |
+  A SaaS product has accumulated dozens of feature flags implemented directly in application code.
+  Product managers want staged rollouts, cohort targeting, and emergency disable paths without redeploys.
+  The system serves 4 million daily users across web and mobile clients. A failed rollout could break billing and onboarding flows.
+  There is no centralized flag service today. Teams are worried about operational complexity, stale flag drift, and performance overhead in request paths.
+supplied_artifacts:
+  - path: artifacts/system-overview.md
+    kind: markdown
+    purpose: Current platform and delivery constraints
+  - path: artifacts/current-flag-pattern.ts
+    kind: code
+    purpose: Example of the existing implementation style
+candidate_instructions:
+  - Propose an architecture for dynamic flag management.
+  - Describe a migration strategy from the current pattern to the new one.
+  - Explain how you would handle availability, caching, consistency, auditability, and rollback.
+  - Call out tradeoffs and what you would intentionally defer in a first version.
+evaluation_signals:
+  - Separates control-plane and data-plane concerns.
+  - Addresses request-path latency and degraded-mode behavior.
+  - Provides a migration plan that can coexist with legacy flags.
+  - Recognizes operational needs such as audit history, ownership, and stale-flag cleanup.
+rubric:
+  strong:
+    - Presents a staged migration with guardrails and realistic tradeoffs.
+    - Discusses failure handling rather than assuming the flag system is always available.
+    - Differentiates needs for server-side and client-side consumers.
+  weak:
+    - Treats the problem as only a CRUD dashboard.
+    - Ignores rollback, caching, or blast radius.
+

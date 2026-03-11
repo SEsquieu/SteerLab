@@ -1,0 +1,146 @@
+# Contributing
+
+SteerLab is an open exploration, not a finished standard. Contributions should make the project more realistic, more inspectable, or more intellectually honest.
+
+## The Core Model
+
+This repository is organized around three canonical challenge archetypes:
+
+- Broken System Investigation
+- Architecture Thought Experiment
+- Tool Steering Challenge
+
+If you are proposing a challenge, rubric, or workflow change, start by being explicit about which archetype it belongs to and what competence signals it is intended to surface.
+
+## Contribution Principles
+
+- Prefer realism over gimmicks.
+- Prefer clear signals over challenge cleverness.
+- Prefer inspectable artifacts over hidden logic.
+- Keep the project grounded in plausible engineering work.
+- Avoid overclaiming. This is an evolving framework.
+
+## Contributing New Challenges
+
+Each challenge should live under [`challenges/`](./challenges) in the directory for its archetype and include:
+
+- a `challenge.yaml`
+- the referenced artifacts
+- an optional `rubric.md` if needed
+
+Before submitting a challenge:
+
+- read [`docs/challenge-archetypes.md`](./docs/challenge-archetypes.md)
+- read [`docs/challenge-design-guide.md`](./docs/challenge-design-guide.md)
+- read [`docs/challenge-format.md`](./docs/challenge-format.md)
+- read [`docs/example-review.md`](./docs/example-review.md) for a concrete reviewer walkthrough
+- start from [`challenges/_templates/`](./challenges/_templates) when possible
+- run `npm run validate:challenges`
+- be explicit about the intended archetype and primary signals
+- keep the scenario plausible for real engineering work
+- include artifacts that support disciplined reasoning
+- avoid hidden tricks that punish good-faith analysis
+
+## Proposing Challenges Within an Archetype
+
+When proposing a new challenge, explain:
+
+- which archetype it belongs to
+- what competence it evaluates
+- why the supplied artifacts are sufficient
+- what strong responses should reveal
+- what weak or misleading versions of the challenge would look like
+
+Examples:
+
+- Broken System Investigation: incident analysis, production regressions, reliability failures, integration anomalies
+- Architecture Thought Experiment: migrations, scaling decisions, boundary design, rollout planning
+- Tool Steering Challenge: AI-assisted refactors, AI-assisted incident support, AI-guided implementation planning
+
+## Improving Challenge Design
+
+High-value design contributions usually do one of these:
+
+- tighten the archetype so the signal is clearer
+- improve artifacts so the challenge feels more like real work
+- remove gimmicks or accidental ambiguity
+- make candidate instructions more concrete
+- improve reviewer guidance so interpretation is less arbitrary
+
+## Suggesting New Signals or Rubrics
+
+Rubrics and evaluation signals are expected to evolve.
+
+Useful improvements usually:
+
+- distinguish shallow fluency from sound reasoning
+- help reviewers see tradeoffs more clearly
+- reduce scoring drift between reviewers
+- identify failure modes such as premature certainty, buzzword architecture, or uncritical AI acceptance
+
+If you propose a rubric change, explain what reviewer confusion or mis-scoring it fixes.
+
+If you are proposing reviewer process changes, read [`docs/reviewer-guide.md`](./docs/reviewer-guide.md) first and explain how your change improves judgment quality or reviewer consistency.
+
+Repository hygiene for public contributions:
+
+- issue templates live under [`.github/ISSUE_TEMPLATE/`](./.github/ISSUE_TEMPLATE)
+- the pull request template lives at [`.github/pull_request_template.md`](./.github/pull_request_template.md)
+- project license: [`LICENSE`](./LICENSE)
+
+## Discussing Evaluation Philosophy
+
+Critique is part of the project.
+
+If you think the archetype model is incomplete, a challenge is biased, a rubric is underspecified, or the project is incentivizing the wrong behavior, say so plainly. Strong criticism is useful when it includes:
+
+- the claim being challenged
+- the practical consequence of getting it wrong
+- a proposed alternative
+- a concrete example that exposes the issue
+
+## Improving the Reference Runner
+
+The current runner is intentionally lightweight. Useful contributions include:
+
+- better archetype presentation in the UI
+- richer artifact rendering
+- improved note and response workflows
+- reviewer mode
+- AI interaction trace capture experiments
+- export/import or replay flows
+
+Keep the implementation hackable. Prefer local-first simplicity unless added complexity clearly earns its place.
+
+## Suggested Workflow
+
+1. Open an issue for substantial philosophy, schema, or workflow changes.
+2. Keep pull requests focused when possible.
+3. Explain the reasoning behind structural changes.
+4. Update docs alongside schema or challenge changes.
+
+## Development
+
+Install the runner dependencies:
+
+```bash
+npm install --prefix apps/runner
+```
+
+Start the local app:
+
+```bash
+npm run dev
+```
+
+## Code Style
+
+- TypeScript preferred for the reference app
+- keep dependencies minimal
+- keep state management simple
+- avoid unnecessary infrastructure
+- document non-obvious design choices
+
+## License
+
+Add a project license before broad distribution if one is not already present.

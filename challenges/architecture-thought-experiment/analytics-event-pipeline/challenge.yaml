@@ -1,0 +1,41 @@
+id: architecture-thought-experiment-analytics-event-pipeline
+title: Redesign an internal analytics ingestion pipeline under cost and reliability pressure
+archetype: architecture-thought-experiment
+category: data-platform
+description: Recommend a new architecture for event ingestion after the current batch-heavy pipeline started losing trust.
+difficulty: advanced
+estimated_time_minutes: 75
+tags:
+  - analytics
+  - reliability
+  - cost
+context: |
+  A product organization relies on internal analytics for roadmap and pricing decisions.
+  The current pipeline writes events into the primary application database, then runs hourly extraction jobs into a warehouse. Analysts report missing events, duplicate rows, and inconsistent event schemas across teams.
+  Leadership wants fresher data, but infrastructure spend is already under scrutiny. The team needs a design that improves reliability and developer ergonomics without introducing an overbuilt platform no one can operate.
+supplied_artifacts:
+  - path: artifacts/current-state.md
+    kind: markdown
+    purpose: Summary of the current event path and pain points
+  - path: artifacts/schema-drift-example.json
+    kind: json
+    purpose: Example of inconsistent event payloads
+candidate_instructions:
+  - Propose a target architecture for event ingestion and downstream consumption.
+  - Explain how you would handle schema governance, backpressure, replay, and cost control.
+  - Describe an incremental transition plan from the current state.
+  - Call out which guarantees matter most and where looser guarantees are acceptable.
+evaluation_signals:
+  - Distinguishes operational analytics needs from transactional database concerns.
+  - Handles schema evolution explicitly instead of assuming producer discipline.
+  - Balances reliability and cost rather than defaulting to the most complex streaming stack.
+  - Provides an incremental path rather than a one-shot rewrite.
+rubric:
+  strong:
+    - Frames the pipeline as a product with producer and consumer contracts.
+    - Identifies where idempotency, replay, and validation belong.
+    - Matches the architecture to the organization’s operational maturity.
+  weak:
+    - Recommends a fashionable stack without explaining why it fits.
+    - Ignores data ownership and schema drift.
+

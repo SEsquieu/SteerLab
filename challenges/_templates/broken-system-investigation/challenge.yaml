@@ -1,0 +1,30 @@
+id: broken-system-investigation-example-name
+title: Replace with a concise investigation title
+archetype: broken-system-investigation
+category: replace-with-topic
+description: One-sentence summary of the system failure or anomaly.
+difficulty: intermediate
+estimated_time_minutes: 45
+tags:
+  - incident-analysis
+context: |
+  Describe the system, the failure symptoms, and the operational context.
+  Include enough realism to make the situation believable.
+  Avoid hiding the answer behind unstated assumptions.
+supplied_artifacts:
+  - path: artifacts/example.log
+    kind: log
+    purpose: Representative production log excerpt
+candidate_instructions:
+  - Identify the most likely cause or causes.
+  - Explain how the supplied evidence supports your diagnosis.
+  - Propose mitigation and longer-term fixes.
+evaluation_signals:
+  - Builds a coherent explanation from the supplied artifacts.
+  - Distinguishes known facts from inference.
+rubric:
+  strong:
+    - Connects symptoms to plausible underlying mechanisms.
+  weak:
+    - Offers generic advice without explaining the failure.
+
