@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { challenges } from "./challenges";
-import type { ChallengeTrainingHint, ChallengeWorkedExample, LoadedChallenge } from "./types";
+import type {
+  ChallengeTrainingCheckpoint,
+  ChallengeTrainingHint,
+  ChallengeWorkedExample,
+  LoadedChallenge,
+} from "./types";
 import { workedExampleContentByHref } from "./workedExamples";
 
 type AppMode = "evaluation" | "training";
@@ -15,7 +20,8 @@ const storageKey = (
     | "reviewerOutcome"
     | "reviewerChecklist"
     | "trainingHintsShown"
-    | "trainingReflection",
+    | "trainingReflection"
+    | "trainingCheckpointResponses",
 ) =>
   `steerlab:${challengeId}:${field}`;
 
@@ -157,6 +163,75 @@ function getTrainingHints(challenge: LoadedChallenge): ChallengeTrainingHint[] {
   return byArchetype[challenge.archetype] ?? [];
 }
 
+function getTrainingCheckpoints(challenge: LoadedChallenge): ChallengeTrainingCheckpoint[] {
+  if (challenge.training_support?.checkpoints?.length) {
+    return challenge.training_support.checkpoints;
+  }
+
+  const byArchetype: Record<string, ChallengeTrainingCheckpoint[]> = {
+    "broken-system-investigation": [
+      {
+        id: "observations",
+        title: "Observations before diagnosis",
+        prompt:
+          "What are the concrete facts in the artifacts before you decide what failure mode you believe happened?",
+      },
+      {
+        id: "hypothesis",
+        title: "Best current hypothesis",
+        prompt:
+          "What causal chain best explains the symptoms, and what evidence would most likely disconfirm it?",
+      },
+      {
+        id: "mitigation",
+        title: "Mitigation before redesign",
+        prompt:
+          "What would you do immediately to reduce risk or user impact before proposing a long-term fix?",
+      },
+    ],
+    "architecture-thought-experiment": [
+      {
+        id: "constraints",
+        title: "Name the governing constraints",
+        prompt:
+          "Which constraints actually drive the design, and which are secondary or deferrable?",
+      },
+      {
+        id: "shape",
+        title: "Sketch the solution shape",
+        prompt: "What high-level architecture would you propose, and where are the important boundaries?",
+      },
+      {
+        id: "migration",
+        title: "Plan safe adoption",
+        prompt: "How would you migrate or roll out this design without betting the whole system at once?",
+      },
+    ],
+    "tool-steering-challenge": [
+      {
+        id: "scope",
+        title: "Constrain the task",
+        prompt:
+          "What is the smallest safe slice you want help with, and what must stay under direct human judgment?",
+      },
+      {
+        id: "steering",
+        title: "Define the steering loop",
+        prompt:
+          "What instructions, acceptance criteria, or context would you give the model before it generates anything?",
+      },
+      {
+        id: "validation",
+        title: "Plan validation before trust",
+        prompt:
+          "How will you detect generated output that looks plausible but is wrong for the system or task?",
+      },
+    ],
+  };
+
+  return byArchetype[challenge.archetype] ?? [];
+}
+
 export default function App() {
   const [appMode, setAppMode] = useState<AppMode>("evaluation");
   const [selectedId, setSelectedId] = useState<string>(challenges[0]?.id ?? "");
@@ -170,6 +245,9 @@ export default function App() {
   const [reviewerChecklist, setReviewerChecklist] = useState<Record<string, boolean>>({});
   const [trainingHintsShown, setTrainingHintsShown] = useState(0);
   const [trainingReflection, setTrainingReflection] = useState("");
+  const [trainingCheckpointResponses, setTrainingCheckpointResponses] = useState<Record<string, string>>(
+    {},
+  );
   const [selectedWorkedExampleHref, setSelectedWorkedExampleHref] = useState<string | null>(null);
   const [workspaceStatus, setWorkspaceStatus] = useState<{
     tone: "success" | "error";
@@ -198,6 +276,7 @@ export default function App() {
   const trainingChecklist = getTrainingChecklist(selected);
   const workedExampleLinks: ChallengeWorkedExample[] = getWorkedExampleLinks(selected);
   const trainingHints = getTrainingHints(selected);
+  const trainingCheckpoints = getTrainingCheckpoints(selected);
   const selectedWorkedExample = workedExampleLinks.find(
     (example) => example.href === selectedWorkedExampleHref,
   );
@@ -219,6 +298,23 @@ export default function App() {
     setTrainingReflection(
       window.localStorage.getItem(storageKey(selected.id, "trainingReflection")) ?? "",
     );
+    try {
+      const savedCheckpointResponses = window.localStorage.getItem(
+        storageKey(selected.id, "trainingCheckpointResponses"),
+      );
+      const parsed = savedCheckpointResponses
+        ? (JSON.parse(savedCheckpointResponses) as Record<string, string>)
+        : {};
+      setTrainingCheckpointResponses(
+        parsed && typeof parsed === "object" && !Array.isArray(parsed)
+          ? Object.fromEntries(
+              Object.entries(parsed).map(([key, value]) => [key, typeof value === "string" ? value : ""]),
+            )
+          : {},
+      );
+    } catch {
+      setTrainingCheckpointResponses({});
+    }
     setReviewerOutcome(window.localStorage.getItem(storageKey(selected.id, "reviewerOutcome")) ?? "");
     setReviewerAssessment(
       window.localStorage.getItem(storageKey(selected.id, "reviewerAssessment")) ?? "",
@@ -263,6 +359,15 @@ export default function App() {
 
   useEffect(() => {
     if (selected) {
+      window.localStorage.setItem(
+        storageKey(selected.id, "trainingCheckpointResponses"),
+        JSON.stringify(trainingCheckpointResponses),
+      );
+    }
+  }, [trainingCheckpointResponses, selected]);
+
+  useEffect(() => {
+    if (selected) {
       window.localStorage.setItem(storageKey(selected.id, "reviewerOutcome"), reviewerOutcome);
     }
   }, [reviewerOutcome, selected]);
@@ -302,6 +407,7 @@ export default function App() {
       response,
       trainingHintsShown,
       trainingReflection,
+      trainingCheckpointResponses,
       reviewerOutcome,
       reviewerAssessment,
       reviewerNotes,
@@ -340,6 +446,7 @@ export default function App() {
         response?: string;
         trainingHintsShown?: number;
         trainingReflection?: string;
+        trainingCheckpointResponses?: Record<string, string>;
         reviewerOutcome?: string;
         reviewerAssessment?: string;
         reviewerNotes?: string;
@@ -391,6 +498,18 @@ export default function App() {
     );
     setTrainingReflection(
       typeof payload.trainingReflection === "string" ? payload.trainingReflection : "",
+    );
+    setTrainingCheckpointResponses(
+      payload.trainingCheckpointResponses &&
+        typeof payload.trainingCheckpointResponses === "object" &&
+        !Array.isArray(payload.trainingCheckpointResponses)
+        ? Object.fromEntries(
+            Object.entries(payload.trainingCheckpointResponses).map(([key, value]) => [
+              key,
+              typeof value === "string" ? value : "",
+            ]),
+          )
+        : {},
     );
     setReviewerOutcome(typeof payload.reviewerOutcome === "string" ? payload.reviewerOutcome : "");
     setReviewerAssessment(
@@ -668,6 +787,35 @@ export default function App() {
                 </ul>
               </section>
             </section>
+
+            {trainingCheckpoints.length > 0 && (
+              <section className="panel">
+                <div className="section-heading">
+                  <h3>Training Checkpoints</h3>
+                  <span className="source-path">Work through these before reaching for hints</span>
+                </div>
+                <div className="checkpoint-list">
+                  {trainingCheckpoints.map((checkpoint, index) => (
+                    <section key={checkpoint.id} className="checkpoint-card">
+                      <h4>
+                        Step {index + 1}: {checkpoint.title}
+                      </h4>
+                      <p>{checkpoint.prompt}</p>
+                      <textarea
+                        value={trainingCheckpointResponses[checkpoint.id] ?? ""}
+                        onChange={(event) =>
+                          setTrainingCheckpointResponses((current) => ({
+                            ...current,
+                            [checkpoint.id]: event.target.value,
+                          }))
+                        }
+                        placeholder="Write a focused answer before moving to the next step."
+                      />
+                    </section>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {trainingHints.length > 0 && (
               <section className="panel">

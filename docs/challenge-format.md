@@ -129,10 +129,13 @@ This can include:
 
 - `reflection_prompts`
 - `thinking_checklist`
+- `checkpoints`
 - `hints`
 - `worked_examples`
 
 This block is for learning scaffolds, not reviewer judgment artifacts. Keep rubric and assessment language out of `training_support`.
+
+`checkpoints` are especially useful when a challenge should guide the learner through a deliberate sequence such as observations before conclusions, constraints before design, or validation planning before trusting AI output.
 
 Example:
 
@@ -144,6 +147,10 @@ training_support:
   thinking_checklist:
     - State the problem in your own words
     - Name the highest-risk assumptions
+  checkpoints:
+    - id: constraints
+      title: Name the governing constraints
+      prompt: Which constraints should drive your first-pass design or diagnosis?
   hints:
     - title: Start with the boundary
       content: Clarify which system component actually owns this decision or failure.

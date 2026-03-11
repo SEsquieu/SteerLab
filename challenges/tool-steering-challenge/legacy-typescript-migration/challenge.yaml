@@ -48,6 +48,16 @@ training_support:
     - Define success criteria before asking the model to change code
     - Constrain scope explicitly in prompts and in diff review
     - Verify generated output with tests, behavior checks, and manual judgment
+  checkpoints:
+    - id: slice
+      title: Choose the smallest safe slice
+      prompt: What is the narrowest migration step that will teach you whether the AI-assisted workflow is trustworthy?
+    - id: steering-loop
+      title: Design the steering loop
+      prompt: What instructions, constraints, and acceptance criteria would you give the model before it touches code?
+    - id: verification
+      title: Verify beyond the compiler
+      prompt: How will you catch generated changes that type-check but still alter runtime behavior or encode the wrong assumptions?
   hints:
     - title: Pick a smaller first slice
       content: A safe first move is usually not “convert the whole module.” Think about the smallest change that reveals whether the workflow is sound.

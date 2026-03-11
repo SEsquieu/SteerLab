@@ -50,6 +50,16 @@ training_support:
     - Restate the failure in your own words before diagnosing it
     - Connect symptoms to a plausible mechanism, not just an overloaded dependency
     - Separate immediate mitigation from durable prevention
+  checkpoints:
+    - id: facts
+      title: Inventory the facts
+      prompt: What do the logs, metrics, and code actually tell you before you decide on a root cause?
+    - id: mechanism
+      title: Explain the failure mechanism
+      prompt: What request-path behavior best explains the latency spike and database saturation?
+    - id: response
+      title: Mitigation before redesign
+      prompt: What would you do immediately to reduce impact, and what longer-term fix would you pursue after the incident stabilizes?
   hints:
     - title: Focus on the repeated misses
       content: The same key appears multiple times in a short window. Ask what that implies about how misses are handled under concurrency.

@@ -363,6 +363,31 @@ button {
   gap: 12px;
 }
 
+.checkpoint-list {
+  display: grid;
+  gap: 14px;
+}
+
+.checkpoint-card {
+  border: 1px solid rgba(231, 236, 239, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+  background: #121b21;
+}
+
+.checkpoint-card h4 {
+  margin: 0 0 8px;
+}
+
+.checkpoint-card p {
+  margin: 0 0 12px;
+  color: #cfdae0;
+}
+
+.checkpoint-card textarea {
+  min-height: 140px;
+}
+
 .hint-card {
   border: 1px solid rgba(231, 236, 239, 0.08);
   border-radius: 14px;

@@ -33,6 +33,10 @@ training_support:
   thinking_checklist:
     - Constrain scope before asking for help
     - Define verification steps before accepting output
+  checkpoints:
+    - id: scope
+      title: Replace with first training step
+      prompt: Ask the learner to define the smallest safe slice and what must remain under direct human judgment.
   hints:
     - title: Replace with first coaching hint
       content: Add a bounded nudge that helps the learner reason about scope, verification, or judgment.

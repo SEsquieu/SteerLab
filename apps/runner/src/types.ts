@@ -19,11 +19,18 @@ export type ChallengeTrainingHint = {
   content: string;
 };
 
+export type ChallengeTrainingCheckpoint = {
+  id: string;
+  title: string;
+  prompt: string;
+};
+
 export type ChallengeTrainingSupport = {
   reflection_prompts?: string[];
   thinking_checklist?: string[];
   worked_examples?: ChallengeWorkedExample[];
   hints?: ChallengeTrainingHint[];
+  checkpoints?: ChallengeTrainingCheckpoint[];
 };
 
 export type Challenge = {

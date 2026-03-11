@@ -34,6 +34,10 @@ training_support:
   thinking_checklist:
     - Separate observation from inference
     - Distinguish mitigation from durable prevention
+  checkpoints:
+    - id: facts
+      title: Replace with first training step
+      prompt: Ask the learner to separate observed facts from conclusions before diagnosing the issue.
   hints:
     - title: Replace with first coaching hint
       content: Add a bounded nudge that helps the learner think without giving away the answer.

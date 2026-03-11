@@ -153,6 +153,28 @@ function validateTrainingSupport(challenge, filePath) {
     }
   }
 
+  const checkpoints = challenge.training_support.checkpoints;
+  if (checkpoints !== undefined) {
+    if (!Array.isArray(checkpoints)) {
+      errors.push(`${filePath}: \`training_support.checkpoints\` must be an array.`);
+    } else {
+      checkpoints.forEach((item, index) => {
+        if (!item || typeof item !== "object" || Array.isArray(item)) {
+          errors.push(`${filePath}: \`training_support.checkpoints[${index}]\` must be an object.`);
+          return;
+        }
+
+        for (const key of ["id", "title", "prompt"]) {
+          if (!isNonEmptyString(item[key])) {
+            errors.push(
+              `${filePath}: \`training_support.checkpoints[${index}].${key}\` must be a non-empty string.`,
+            );
+          }
+        }
+      });
+    }
+  }
+
   const workedExamples = challenge.training_support.worked_examples;
   if (workedExamples === undefined) {
     return;

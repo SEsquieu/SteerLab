@@ -47,6 +47,16 @@ training_support:
     - Start with the current failure modes before proposing new components
     - Match the design to team capacity and operating reality
     - Distinguish ingestion reliability from downstream consumer needs
+  checkpoints:
+    - id: guarantees
+      title: Choose the important guarantees
+      prompt: Which guarantees matter most for this pipeline, and where can you accept looser guarantees to control cost or complexity?
+    - id: ownership
+      title: Place validation and replay deliberately
+      prompt: Where should schema validation, idempotency, replay, and dead-letter handling live in the system?
+    - id: transition
+      title: Plan incremental adoption
+      prompt: What migration path improves trust in the data without requiring a risky one-shot replacement?
   hints:
     - title: Treat this as a producer-consumer system
       content: Ask where contracts, validation, and replay semantics belong rather than thinking only in terms of infrastructure components.

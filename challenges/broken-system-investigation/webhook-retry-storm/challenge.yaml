@@ -51,6 +51,16 @@ training_support:
     - Distinguish retries from the application behavior that made retries dangerous
     - Look for transactional and persistence boundaries
     - Describe how you would confirm the fix after rollout
+  checkpoints:
+    - id: boundary
+      title: Locate the true idempotency boundary
+      prompt: Which side effect actually needs protection, and where in the current flow is that protection missing or too weak?
+    - id: causal-chain
+      title: Connect retries to harm
+      prompt: Why did provider retries become duplicate shipments instead of harmless repeated events?
+    - id: validation
+      title: Stabilize and verify
+      prompt: What mitigation would you put in place immediately, and how would you verify the permanent fix under repeated deliveries?
   hints:
     - title: Retries are not always the real root cause
       content: Ask why processor retries were able to create duplicate side effects instead of being harmless duplicates.

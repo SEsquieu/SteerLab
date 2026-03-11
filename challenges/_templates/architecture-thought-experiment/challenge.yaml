@@ -33,6 +33,10 @@ training_support:
   thinking_checklist:
     - Name the key tradeoffs explicitly
     - Separate target architecture from migration plan
+  checkpoints:
+    - id: constraints
+      title: Replace with first training step
+      prompt: Ask the learner to name the constraints that should govern the design before proposing components.
   hints:
     - title: Replace with first coaching hint
       content: Add a bounded nudge that helps the learner think without dictating the architecture.

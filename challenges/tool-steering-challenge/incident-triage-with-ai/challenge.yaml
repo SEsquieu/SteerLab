@@ -48,6 +48,16 @@ training_support:
     - Separate observed facts from model-generated hypotheses
     - Preserve human ownership of incident decisions
     - Define how AI output will be verified before operational action
+  checkpoints:
+    - id: boundaries
+      title: Bound the model's role
+      prompt: Which incident tasks would you let AI assist with, and which tasks must remain fully under direct human judgment?
+    - id: evidence
+      title: Protect evidence discipline
+      prompt: How will you keep AI-generated suggestions from being confused with observed facts during the incident?
+    - id: privacy
+      title: Sanitize and verify
+      prompt: What data would you withhold or sanitize, and how would you validate any AI-derived hypothesis before acting on it?
   hints:
     - title: Use AI for bounded support, not authority
       content: Think about tasks like summarization, alternate hypotheses, or query formulation rather than handing root-cause ownership to the model.

@@ -48,6 +48,16 @@ training_support:
     - Name the highest-risk constraints before proposing architecture
     - Explain degraded-mode behavior explicitly
     - Separate migration strategy from target end state
+  checkpoints:
+    - id: constraints
+      title: Name the governing constraints
+      prompt: Which constraints matter most here, and which ones are easy to overlook if you focus only on the admin experience?
+    - id: architecture-shape
+      title: Separate planes and responsibilities
+      prompt: What belongs in the control plane, what belongs in request-path evaluation, and where do caching and fallback behavior fit?
+    - id: migration
+      title: Plan coexistence and rollout
+      prompt: How would legacy hard-coded flags and dynamic flags coexist safely during migration?
   hints:
     - title: Separate control plane from evaluation path
       content: The UI or admin API is not the core architecture problem. The critical question is how flags are evaluated safely in live systems.
