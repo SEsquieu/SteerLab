@@ -30,6 +30,7 @@ Shared core:
 - challenge schema
 - challenge content
 - challenge design guidance
+- model integration boundaries
 - base runner primitives
 
 Evaluation Mode:
@@ -73,6 +74,7 @@ Before submitting a challenge:
 - read [`docs/example-review.md`](./docs/example-review.md) for a concrete reviewer walkthrough
 - read [`docs/example-review-architecture.md`](./docs/example-review-architecture.md) for a worked architecture review example
 - read [`docs/example-review-tool-steering.md`](./docs/example-review-tool-steering.md) for a worked tool steering review example
+- read [`docs/llm-integration.md`](./docs/llm-integration.md) if your proposal touches model use, trace capture, generation, or coaching
 - read [`docs/training-mode.md`](./docs/training-mode.md)
 - start from [`challenges/_templates/`](./challenges/_templates) when possible
 - run `npm run validate:challenges`
@@ -162,6 +164,7 @@ The current runner is intentionally lightweight. Useful contributions include:
 - reviewer mode
 - training mode scaffolds
 - AI interaction trace capture experiments
+- model-provider integration that preserves the framework boundary
 - export/import or replay flows
 
 Keep the implementation hackable. Prefer local-first simplicity unless added complexity clearly earns its place.

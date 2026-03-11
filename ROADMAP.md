@@ -43,13 +43,22 @@ This roadmap is directional. It describes likely phases of the project, not fixe
 - explore practice-oriented challenge navigation
 - support learning loops without weakening challenge realism
 
-## Phase 4: AI Interaction and Reasoning Trace Capture
+## Phase 4: Model Integration And Reasoning Trace Capture
 
-- define optional AI interaction trace capture
+- define a model-agnostic provider abstraction
+- separate scenario generation, coaching, and candidate tool interaction as distinct roles
+- support optional scenario generation for Training Mode
+- support optional coaching for Training Mode under explicit pedagogical constraints
+- define authentic candidate-model trace capture for Evaluation Mode
+- study privacy, consent, and misuse risks around trace capture
+- distinguish disciplined steering from superficial tool theatrics
+
+## Phase 4B: Replay And Review
+
 - explore replayable reasoning traces
 - experiment with prompt and tool-use logging formats
-- study privacy, consent, and misuse risks
-- distinguish disciplined steering from superficial tool theatrics
+- connect evaluation-time traces to reviewer workflows
+- explore training-time replay for coaching and reflection
 
 ## Phase 5: Authoring Tools and Ecosystem Growth
 

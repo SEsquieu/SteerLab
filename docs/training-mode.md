@@ -48,6 +48,8 @@ Training Mode uses the same SteerLab core as Evaluation Mode:
 
 This matters because the project should not fork challenge content too early. The same scenario should be usable both for evaluation and for practice, even if the surrounding experience differs.
 
+Training Mode may eventually use model-backed scenario generation and coaching, but those model roles should remain bounded by SteerLab’s pedagogical structure rather than acting as unconstrained assistants.
+
 ## Typical Training Mode Features
 
 Examples of training-specific features include:
@@ -58,6 +60,7 @@ Examples of training-specific features include:
 - progressive reveal of context
 - worked example comparisons
 - coaching scaffolds
+- model-backed scenario generation and coaching under explicit rules
 
 These features are meant to help people internalize better engineering habits, especially when using powerful tools.
 
@@ -84,3 +87,4 @@ Training Mode should not collapse into:
 
 The value of this mode depends on staying grounded in the same serious scenarios that make the evaluation side useful.
 
+See [`docs/llm-integration.md`](./llm-integration.md) for the model-role split between scenario generation, coaching, and authentic evaluation-time model use.

@@ -13,6 +13,8 @@ The project now distinguishes between a shared core framework and two parallel a
 - Evaluation Mode
 - Training Mode
 
+It also assumes future model integration should remain model-agnostic and role-specific rather than tied to a single provider or one generic “AI assistant” concept.
+
 ## Why This Exists
 
 Many engineering interviews still rely heavily on signals that are convenient to administer but weakly aligned with real work:
@@ -137,6 +139,7 @@ Shared core:
 - challenge schema
 - challenge library
 - challenge design guidance
+- model integration boundaries
 - reference runner
 
 Evaluation Mode:
@@ -230,6 +233,7 @@ Read the core docs:
 - [`docs/example-review.md`](./docs/example-review.md)
 - [`docs/example-review-architecture.md`](./docs/example-review-architecture.md)
 - [`docs/example-review-tool-steering.md`](./docs/example-review-tool-steering.md)
+- [`docs/llm-integration.md`](./docs/llm-integration.md)
 - [`docs/reviewer-guide.md`](./docs/reviewer-guide.md)
 - [`docs/training-mode.md`](./docs/training-mode.md)
 
@@ -267,6 +271,7 @@ Start here:
 - [`docs/example-review.md`](./docs/example-review.md)
 - [`docs/example-review-architecture.md`](./docs/example-review-architecture.md)
 - [`docs/example-review-tool-steering.md`](./docs/example-review-tool-steering.md)
+- [`docs/llm-integration.md`](./docs/llm-integration.md)
 - [`docs/reviewer-guide.md`](./docs/reviewer-guide.md)
 - [`docs/training-mode.md`](./docs/training-mode.md)
 
