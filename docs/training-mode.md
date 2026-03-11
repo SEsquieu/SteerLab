@@ -59,6 +59,7 @@ Examples of training-specific features include:
 - reflection prompts
 - thinking checklists
 - checkpoints that ask for the right kind of thinking at the right time
+- progress-oriented navigation through the practice flow
 - guided hints
 - progressive reveal of hints and examples
 - worked example comparisons

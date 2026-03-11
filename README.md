@@ -207,7 +207,7 @@ The repository includes a minimal React + Vite + TypeScript runner. It currently
 - renders challenge context, instructions, and supplied artifacts
 - stores local notes and responses in the browser
 - supports reviewer workflows in Evaluation Mode
-- supports reflection prompts, thinking checklists, structured checkpoints, progressive hints, and compare-and-reflect worked examples in Training Mode
+- supports reflection prompts, thinking checklists, structured checkpoints, progressive hints, compare-and-reflect worked examples, and progress-oriented navigation in Training Mode
 - supports local export/import of workspace state
 
 It is still intentionally lightweight. It does not yet implement live model-provider integration, authentic AI trace capture, replayable sessions, or richer artifact viewers for larger bundles.

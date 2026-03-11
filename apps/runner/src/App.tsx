@@ -347,6 +347,8 @@ export default function App() {
   const [trainingComparisonReflection, setTrainingComparisonReflection] =
     useState<TrainingComparisonReflection>(emptyTrainingComparisonReflection);
   const [trainingRevisedResponse, setTrainingRevisedResponse] = useState("");
+  const [trainingProgressOpen, setTrainingProgressOpen] = useState(false);
+  const [openTrainingStageId, setOpenTrainingStageId] = useState("training-notes");
   const [selectedWorkedExampleHref, setSelectedWorkedExampleHref] = useState<string | null>(null);
   const [workspaceStatus, setWorkspaceStatus] = useState<{
     tone: "success" | "error";
@@ -783,6 +785,320 @@ export default function App() {
   const hasStartedRevision =
     trainingRevisedResponse.trim().length > 0 ||
     Object.values(trainingComparisonReflection).some((value) => value.trim().length > 0);
+  const completedCheckpointCount = trainingCheckpoints.filter(
+    (checkpoint) => (trainingCheckpointResponses[checkpoint.id] ?? "").trim().length > 0,
+  ).length;
+  const hasViewedHints = trainingHintsShown > 0;
+  const hasOpenedWorkedExample = Boolean(selectedWorkedExampleHref);
+  const hasStructuredComparisonReflection =
+    Object.values(trainingComparisonReflection).some((value) => value.trim().length > 0) ||
+    trainingReflection.trim().length > 0;
+  const trainingProgressItems = [
+    {
+      id: "training-notes",
+      label: "Capture notes",
+      detail: notes.trim().length > 0 ? "Notes started" : "Record observations and constraints",
+      completed: notes.trim().length > 0,
+    },
+    {
+      id: "training-response",
+      label: "Write first response",
+      detail: hasAttemptedTrainingResponse ? "First pass written" : "Draft your initial thinking",
+      completed: hasAttemptedTrainingResponse,
+    },
+    {
+      id: "training-checkpoints",
+      label: "Work checkpoints",
+      detail:
+        trainingCheckpoints.length > 0
+          ? `${completedCheckpointCount}/${trainingCheckpoints.length} checkpoint responses`
+          : "No authored checkpoints for this challenge",
+      completed:
+        trainingCheckpoints.length === 0 || completedCheckpointCount === trainingCheckpoints.length,
+    },
+    {
+      id: "training-hints",
+      label: "Use hints deliberately",
+      detail:
+        trainingHints.length > 0
+          ? hasViewedHints
+            ? `${trainingHintsShown}/${trainingHints.length} hints revealed`
+            : "Hints available if you get stuck"
+          : "No authored hints for this challenge",
+      completed: trainingHints.length === 0 || hasViewedHints,
+    },
+    {
+      id: "training-worked-examples",
+      label: "Compare with worked example",
+      detail: hasOpenedWorkedExample ? "Worked example open" : "Unlock after a first response",
+      completed: hasOpenedWorkedExample,
+    },
+    {
+      id: "training-compare-reflect",
+      label: "Reflect after comparison",
+      detail: hasStructuredComparisonReflection ? "Comparison notes captured" : "Write what changed",
+      completed: hasStructuredComparisonReflection,
+    },
+    {
+      id: "training-revised-response",
+      label: "Revise your response",
+      detail:
+        trainingRevisedResponse.trim().length > 0
+          ? "Second pass drafted"
+          : "Turn the comparison into a stronger revision",
+      completed: trainingRevisedResponse.trim().length > 0,
+    },
+  ];
+  const completedTrainingProgressCount = trainingProgressItems.filter((item) => item.completed).length;
+
+  function renderTrainingStageContent(stageId: string) {
+    if (stageId === "training-notes") {
+      return (
+        <textarea
+          value={notes}
+          onChange={(event) => setNotes(event.target.value)}
+          placeholder="Capture observations, assumptions, tradeoffs, and what you are learning."
+        />
+      );
+    }
+
+    if (stageId === "training-response") {
+      return (
+        <textarea
+          value={response}
+          onChange={(event) => setResponse(event.target.value)}
+          placeholder="Write your current thinking before comparing it with examples or future coaching."
+        />
+      );
+    }
+
+    if (stageId === "training-checkpoints") {
+      if (trainingCheckpoints.length === 0) {
+        return <p className="source-path">No authored checkpoints for this challenge.</p>;
+      }
+
+      return (
+        <div className="checkpoint-list">
+          {trainingCheckpoints.map((checkpoint, index) => (
+            <section key={checkpoint.id} className="checkpoint-card">
+              <h4>
+                Step {index + 1}: {checkpoint.title}
+              </h4>
+              <p>{checkpoint.prompt}</p>
+              <textarea
+                value={trainingCheckpointResponses[checkpoint.id] ?? ""}
+                onChange={(event) =>
+                  setTrainingCheckpointResponses((current) => ({
+                    ...current,
+                    [checkpoint.id]: event.target.value,
+                  }))
+                }
+                placeholder="Write a focused answer before moving to the next step."
+              />
+            </section>
+          ))}
+        </div>
+      );
+    }
+
+    if (stageId === "training-hints") {
+      if (trainingHints.length === 0) {
+        return <p className="source-path">No authored hints for this challenge.</p>;
+      }
+
+      return (
+        <>
+          <div className="hints-toolbar">
+            <button
+              type="button"
+              className="tool-button"
+              onClick={() =>
+                setTrainingHintsShown((current) => Math.min(current + 1, trainingHints.length))
+              }
+              disabled={trainingHintsShown >= trainingHints.length}
+            >
+              {trainingHintsShown === 0 ? "Show first hint" : "Show next hint"}
+            </button>
+            <button
+              type="button"
+              className="tool-button"
+              onClick={() => setTrainingHintsShown(0)}
+              disabled={trainingHintsShown === 0}
+            >
+              Reset hints
+            </button>
+          </div>
+          <div className="hint-list">
+            {trainingHintsShown === 0 && <p className="source-path">No hints revealed yet.</p>}
+            {trainingHints.slice(0, trainingHintsShown).map((hint, index) => (
+              <article key={`${hint.title}-${index}`} className="hint-card">
+                <strong>
+                  Hint {index + 1}: {hint.title}
+                </strong>
+                <p>{hint.content}</p>
+              </article>
+            ))}
+          </div>
+        </>
+      );
+    }
+
+    if (stageId === "training-worked-examples") {
+      return (
+        <>
+          {!hasAttemptedTrainingResponse && (
+            <p className="source-path">
+              Write a practice response first. Worked examples are meant for comparison, not as a
+              starting point.
+            </p>
+          )}
+          <div className="worked-examples">
+            {workedExampleLinks.map((link) => (
+              <button
+                key={link.href}
+                type="button"
+                className={
+                  selectedWorkedExampleHref === link.href
+                    ? "worked-example-link active"
+                    : "worked-example-link"
+                }
+                onClick={() => setSelectedWorkedExampleHref(link.href)}
+                disabled={!hasAttemptedTrainingResponse}
+              >
+                {link.label}
+              </button>
+            ))}
+          </div>
+        </>
+      );
+    }
+
+    if (stageId === "training-compare-reflect") {
+      if (!selectedWorkedExample || !selectedWorkedExampleContent) {
+        return (
+          <p className="source-path">
+            Open a worked example first, then compare your response and record what changed.
+          </p>
+        );
+      }
+
+      return (
+        <>
+          <div className="section-heading">
+            <p className="source-path">{selectedWorkedExample.label}</p>
+            <button
+              type="button"
+              className="tool-button"
+              onClick={() => setSelectedWorkedExampleHref(null)}
+            >
+              Hide example
+            </button>
+          </div>
+          <div className="compare-grid">
+            <section className="compare-card">
+              <h4>Your current response</h4>
+              <pre className="worked-example-content">{response}</pre>
+            </section>
+            <section className="compare-card">
+              <h4>Worked example</h4>
+              <pre className="worked-example-content">{selectedWorkedExampleContent}</pre>
+            </section>
+          </div>
+          <section className="compare-reflection">
+            <h4>Reflection After Comparison</h4>
+            <p className="source-path">
+              Record what changed after comparison, then revise your response instead of stopping at insight.
+            </p>
+            <div className="reflection-grid">
+              <section className="reflection-card">
+                <h5>What you missed</h5>
+                <textarea
+                  value={trainingComparisonReflection.missed}
+                  onChange={(event) =>
+                    setTrainingComparisonReflection((current) => ({
+                      ...current,
+                      missed: event.target.value,
+                    }))
+                  }
+                  placeholder="Capture missing constraints, evidence, or failure modes."
+                />
+              </section>
+              <section className="reflection-card">
+                <h5>Where you over-indexed</h5>
+                <textarea
+                  value={trainingComparisonReflection.overIndexed}
+                  onChange={(event) =>
+                    setTrainingComparisonReflection((current) => ({
+                      ...current,
+                      overIndexed: event.target.value,
+                    }))
+                  }
+                  placeholder="Note places where you chased the wrong detail or overcomplicated the answer."
+                />
+              </section>
+              <section className="reflection-card">
+                <h5>What to keep</h5>
+                <textarea
+                  value={trainingComparisonReflection.keep}
+                  onChange={(event) =>
+                    setTrainingComparisonReflection((current) => ({
+                      ...current,
+                      keep: event.target.value,
+                    }))
+                  }
+                  placeholder="Preserve the parts of your original response that still hold up."
+                />
+              </section>
+              <section className="reflection-card">
+                <h5>What to revise</h5>
+                <textarea
+                  value={trainingComparisonReflection.revise}
+                  onChange={(event) =>
+                    setTrainingComparisonReflection((current) => ({
+                      ...current,
+                      revise: event.target.value,
+                    }))
+                  }
+                  placeholder="Name the structural changes you want in the revised response."
+                />
+              </section>
+            </div>
+            <textarea
+              value={trainingReflection}
+              onChange={(event) => setTrainingReflection(event.target.value)}
+              placeholder="Optional synthesis: summarize the main lesson from the comparison in your own words."
+            />
+          </section>
+        </>
+      );
+    }
+
+    if (stageId === "training-revised-response") {
+      return (
+        <>
+          <div className="section-heading">
+            <p className="source-path">
+              Turn the comparison into a stronger second pass. Keep this separate from your first draft.
+            </p>
+            <button
+              type="button"
+              className="tool-button"
+              onClick={() => setTrainingRevisedResponse(response)}
+            >
+              {hasStartedRevision ? "Replace with current response" : "Start from current response"}
+            </button>
+          </div>
+          <textarea
+            value={trainingRevisedResponse}
+            onChange={(event) => setTrainingRevisedResponse(event.target.value)}
+            placeholder="Write the revised version you would give after reflecting on the worked example."
+          />
+        </>
+      );
+    }
+
+    return null;
+  }
 
   return (
     <div className="app-shell">
@@ -1063,267 +1379,101 @@ export default function App() {
           </div>
         </section>
 
-        <section className="workspace-grid">
-          <section className="panel">
-            <h3>{appMode === "training" ? "Learning Notes" : "Candidate Notes"}</h3>
-            <textarea
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder={
-                appMode === "training"
-                  ? "Capture observations, assumptions, tradeoffs, and what you are learning."
-                  : "Capture hypotheses, tradeoffs, missing data, and working notes."
-              }
-            />
+        {appMode === "training" ? (
+          <section className="panel training-progress-panel">
+            <button
+              type="button"
+              className="training-progress-toggle"
+              onClick={() => setTrainingProgressOpen((current) => !current)}
+              aria-expanded={trainingProgressOpen}
+            >
+              <span className="training-progress-toggle-copy">
+                <strong>Training Workflow</strong>
+                <span>
+                  {completedTrainingProgressCount}/{trainingProgressItems.length} stages touched
+                </span>
+              </span>
+              <span className="training-progress-toggle-state">
+                {trainingProgressOpen ? "Hide workflow" : "Show workflow"}
+              </span>
+            </button>
+            {trainingProgressOpen && (
+              <>
+                <section className="workspace-grid training-guides">
+                  <section className="panel">
+                    <h3>Reflection Prompts</h3>
+                    <ul>
+                      {trainingPrompts.map((prompt) => (
+                        <li key={prompt}>{prompt}</li>
+                      ))}
+                    </ul>
+                  </section>
+                  <section className="panel">
+                    <h3>Thinking Checklist</h3>
+                    <ul>
+                      {trainingChecklist.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </section>
+                </section>
+
+                <div className="training-progress-list">
+                  {trainingProgressItems.map((item, index) => (
+                    <section
+                      key={item.id}
+                      className={item.completed ? "training-progress-item complete" : "training-progress-item"}
+                    >
+                      <button
+                        type="button"
+                        className="training-progress-item-toggle"
+                        onClick={() =>
+                          setOpenTrainingStageId((current) => (current === item.id ? "" : item.id))
+                        }
+                        aria-expanded={openTrainingStageId === item.id}
+                      >
+                        <span className="training-progress-step">{index + 1}</span>
+                        <span className="training-progress-copy">
+                          <strong>{item.label}</strong>
+                          <span>{item.detail}</span>
+                        </span>
+                        <span className="training-progress-state">
+                          {openTrainingStageId === item.id ? "Collapse" : item.completed ? "Done" : "Open"}
+                        </span>
+                      </button>
+                      {openTrainingStageId === item.id && (
+                        <div className="training-progress-content">{renderTrainingStageContent(item.id)}</div>
+                      )}
+                    </section>
+                  ))}
+                </div>
+              </>
+            )}
           </section>
-          <section className="panel">
-            <h3>{appMode === "training" ? "Practice Response" : "Draft Response"}</h3>
-            <textarea
-              value={response}
-              onChange={(event) => setResponse(event.target.value)}
-              placeholder={
-                appMode === "training"
-                  ? "Write your current thinking before comparing it with examples or future coaching."
-                  : "Write the response you would submit for review."
-              }
-            />
+        ) : (
+          <section className="workspace-grid">
+            <section className="panel">
+              <h3>Candidate Notes</h3>
+              <textarea
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                placeholder="Capture hypotheses, tradeoffs, missing data, and working notes."
+              />
+            </section>
+            <section className="panel">
+              <h3>Draft Response</h3>
+              <textarea
+                value={response}
+                onChange={(event) => setResponse(event.target.value)}
+                placeholder="Write the response you would submit for review."
+              />
+            </section>
           </section>
-        </section>
+        )}
 
         {appMode === "training" && (
           <>
-            <section className="workspace-grid">
-              <section className="panel">
-                <h3>Reflection Prompts</h3>
-                <ul>
-                  {trainingPrompts.map((prompt) => (
-                    <li key={prompt}>{prompt}</li>
-                  ))}
-                </ul>
-              </section>
-              <section className="panel">
-                <h3>Thinking Checklist</h3>
-                <ul>
-                  {trainingChecklist.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </section>
-            </section>
-
-            {trainingCheckpoints.length > 0 && (
-              <section className="panel">
-                <div className="section-heading">
-                  <h3>Training Checkpoints</h3>
-                  <span className="source-path">Work through these before reaching for hints</span>
-                </div>
-                <div className="checkpoint-list">
-                  {trainingCheckpoints.map((checkpoint, index) => (
-                    <section key={checkpoint.id} className="checkpoint-card">
-                      <h4>
-                        Step {index + 1}: {checkpoint.title}
-                      </h4>
-                      <p>{checkpoint.prompt}</p>
-                      <textarea
-                        value={trainingCheckpointResponses[checkpoint.id] ?? ""}
-                        onChange={(event) =>
-                          setTrainingCheckpointResponses((current) => ({
-                            ...current,
-                            [checkpoint.id]: event.target.value,
-                          }))
-                        }
-                        placeholder="Write a focused answer before moving to the next step."
-                      />
-                    </section>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {trainingHints.length > 0 && (
-              <section className="panel">
-                <div className="section-heading">
-                  <h3>Progressive Hints</h3>
-                  <span className="source-path">
-                    Reveal only after pushing your own reasoning as far as you can
-                  </span>
-                </div>
-                <div className="hints-toolbar">
-                  <button
-                    type="button"
-                    className="tool-button"
-                    onClick={() =>
-                      setTrainingHintsShown((current) => Math.min(current + 1, trainingHints.length))
-                    }
-                    disabled={trainingHintsShown >= trainingHints.length}
-                  >
-                    {trainingHintsShown === 0 ? "Show first hint" : "Show next hint"}
-                  </button>
-                  <button
-                    type="button"
-                    className="tool-button"
-                    onClick={() => setTrainingHintsShown(0)}
-                    disabled={trainingHintsShown === 0}
-                  >
-                    Reset hints
-                  </button>
-                </div>
-                <div className="hint-list">
-                  {trainingHintsShown === 0 && (
-                    <p className="source-path">No hints revealed yet.</p>
-                  )}
-                  {trainingHints.slice(0, trainingHintsShown).map((hint, index) => (
-                    <article key={`${hint.title}-${index}`} className="hint-card">
-                      <strong>
-                        Hint {index + 1}: {hint.title}
-                      </strong>
-                      <p>{hint.content}</p>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            <section className="panel">
-              <div className="section-heading">
-                <h3>Worked Examples</h3>
-                <span className="source-path">Unlock after attempting your own response</span>
-              </div>
-              {!hasAttemptedTrainingResponse && (
-                <p className="source-path">
-                  Write a practice response first. Worked examples are meant for comparison, not as
-                  a starting point.
-                </p>
-              )}
-              <div className="worked-examples">
-                {workedExampleLinks.map((link) => (
-                  <button
-                    key={link.href}
-                    type="button"
-                    className={
-                      selectedWorkedExampleHref === link.href
-                        ? "worked-example-link active"
-                        : "worked-example-link"
-                    }
-                    onClick={() => setSelectedWorkedExampleHref(link.href)}
-                    disabled={!hasAttemptedTrainingResponse}
-                  >
-                    {link.label}
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            {selectedWorkedExample && selectedWorkedExampleContent && (
-              <section className="panel">
-                <div className="section-heading">
-                  <h3>Compare And Reflect</h3>
-                  <button
-                    type="button"
-                    className="tool-button"
-                    onClick={() => setSelectedWorkedExampleHref(null)}
-                  >
-                    Hide example
-                  </button>
-                </div>
-                <p className="source-path">{selectedWorkedExample.label}</p>
-                <div className="compare-grid">
-                  <section className="compare-card">
-                    <h4>Your current response</h4>
-                    <pre className="worked-example-content">{response}</pre>
-                  </section>
-                  <section className="compare-card">
-                    <h4>Worked example</h4>
-                    <pre className="worked-example-content">{selectedWorkedExampleContent}</pre>
-                  </section>
-                </div>
-                <section className="compare-reflection">
-                  <h4>Reflection After Comparison</h4>
-                  <p className="source-path">
-                    Record what changed after comparison, then revise your response instead of stopping at insight.
-                  </p>
-                  <div className="reflection-grid">
-                    <section className="reflection-card">
-                      <h5>What you missed</h5>
-                      <textarea
-                        value={trainingComparisonReflection.missed}
-                        onChange={(event) =>
-                          setTrainingComparisonReflection((current) => ({
-                            ...current,
-                            missed: event.target.value,
-                          }))
-                        }
-                        placeholder="Capture missing constraints, evidence, or failure modes."
-                      />
-                    </section>
-                    <section className="reflection-card">
-                      <h5>Where you over-indexed</h5>
-                      <textarea
-                        value={trainingComparisonReflection.overIndexed}
-                        onChange={(event) =>
-                          setTrainingComparisonReflection((current) => ({
-                            ...current,
-                            overIndexed: event.target.value,
-                          }))
-                        }
-                        placeholder="Note places where you chased the wrong detail or overcomplicated the answer."
-                      />
-                    </section>
-                    <section className="reflection-card">
-                      <h5>What to keep</h5>
-                      <textarea
-                        value={trainingComparisonReflection.keep}
-                        onChange={(event) =>
-                          setTrainingComparisonReflection((current) => ({
-                            ...current,
-                            keep: event.target.value,
-                          }))
-                        }
-                        placeholder="Preserve the parts of your original response that still hold up."
-                      />
-                    </section>
-                    <section className="reflection-card">
-                      <h5>What to revise</h5>
-                      <textarea
-                        value={trainingComparisonReflection.revise}
-                        onChange={(event) =>
-                          setTrainingComparisonReflection((current) => ({
-                            ...current,
-                            revise: event.target.value,
-                          }))
-                        }
-                        placeholder="Name the structural changes you want in the revised response."
-                      />
-                    </section>
-                  </div>
-                  <textarea
-                    value={trainingReflection}
-                    onChange={(event) => setTrainingReflection(event.target.value)}
-                    placeholder="Optional synthesis: summarize the main lesson from the comparison in your own words."
-                  />
-                </section>
-                <section className="compare-reflection">
-                  <div className="section-heading">
-                    <h4>Revised Response</h4>
-                    <button
-                      type="button"
-                      className="tool-button"
-                      onClick={() => setTrainingRevisedResponse(response)}
-                    >
-                      {hasStartedRevision ? "Replace with current response" : "Start from current response"}
-                    </button>
-                  </div>
-                  <p className="source-path">
-                    Turn the comparison into a stronger second pass. Keep this separate from your first draft.
-                  </p>
-                  <textarea
-                    value={trainingRevisedResponse}
-                    onChange={(event) => setTrainingRevisedResponse(event.target.value)}
-                    placeholder="Write the revised version you would give after reflecting on the worked example."
-                  />
-                </section>
-              </section>
-            )}
+            
           </>
         )}
 
