@@ -9,6 +9,23 @@ export type ChallengeRubric = {
   weak?: string[];
 };
 
+export type ChallengeWorkedExample = {
+  label: string;
+  href: string;
+};
+
+export type ChallengeTrainingHint = {
+  title: string;
+  content: string;
+};
+
+export type ChallengeTrainingSupport = {
+  reflection_prompts?: string[];
+  thinking_checklist?: string[];
+  worked_examples?: ChallengeWorkedExample[];
+  hints?: ChallengeTrainingHint[];
+};
+
 export type Challenge = {
   id: string;
   title: string;
@@ -23,6 +40,7 @@ export type Challenge = {
   estimated_time_minutes: number;
   tags?: string[];
   rubric?: ChallengeRubric;
+  training_support?: ChallengeTrainingSupport;
 };
 
 export type ChallengeArtifactContent = ChallengeArtifact & {

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { challenges } from "./challenges";
-import type { LoadedChallenge } from "./types";
+import type { ChallengeTrainingHint, ChallengeWorkedExample, LoadedChallenge } from "./types";
 
 type AppMode = "evaluation" | "training";
 
@@ -12,7 +12,8 @@ const storageKey = (
     | "reviewerAssessment"
     | "reviewerNotes"
     | "reviewerOutcome"
-    | "reviewerChecklist",
+    | "reviewerChecklist"
+    | "trainingHintsShown",
 ) =>
   `steerlab:${challengeId}:${field}`;
 
@@ -21,6 +22,10 @@ function formatLabel(value: string) {
 }
 
 function getTrainingPrompts(challenge: LoadedChallenge) {
+  if (challenge.training_support?.reflection_prompts?.length) {
+    return challenge.training_support.reflection_prompts;
+  }
+
   const archetypePrompts: Record<string, string[]> = {
     "broken-system-investigation": [
       "What are the observed facts versus your current inferences?",
@@ -47,6 +52,10 @@ function getTrainingPrompts(challenge: LoadedChallenge) {
 }
 
 function getTrainingChecklist(challenge: LoadedChallenge) {
+  if (challenge.training_support?.thinking_checklist?.length) {
+    return challenge.training_support.thinking_checklist;
+  }
+
   return [
     `State the problem in your own words before solving it`,
     `Name the most important constraints explicitly`,
@@ -65,6 +74,10 @@ function getTrainingChecklist(challenge: LoadedChallenge) {
 }
 
 function getWorkedExampleLinks(challenge: LoadedChallenge) {
+  if (challenge.training_support?.worked_examples?.length) {
+    return challenge.training_support.worked_examples;
+  }
+
   const byArchetype: Record<string, { label: string; href: string }[]> = {
     "broken-system-investigation": [
       { label: "Broken System example review", href: "/docs/example-review.md" },
@@ -74,6 +87,68 @@ function getWorkedExampleLinks(challenge: LoadedChallenge) {
     ],
     "tool-steering-challenge": [
       { label: "Tool Steering example review", href: "/docs/example-review-tool-steering.md" },
+    ],
+  };
+
+  return byArchetype[challenge.archetype] ?? [];
+}
+
+function getTrainingHints(challenge: LoadedChallenge): ChallengeTrainingHint[] {
+  if (challenge.training_support?.hints?.length) {
+    return challenge.training_support.hints;
+  }
+
+  const byArchetype: Record<string, ChallengeTrainingHint[]> = {
+    "broken-system-investigation": [
+      {
+        title: "Start with evidence",
+        content:
+          "List the observable facts in the artifacts before you decide what failure mode you believe happened.",
+      },
+      {
+        title: "Find a causal chain",
+        content:
+          "Ask what concrete mechanism could connect the observed symptoms to the system behavior shown in the artifacts.",
+      },
+      {
+        title: "Separate now from later",
+        content:
+          "A strong response usually distinguishes immediate mitigation from durable prevention.",
+      },
+    ],
+    "architecture-thought-experiment": [
+      {
+        title: "Name the real constraints first",
+        content:
+          "Before proposing architecture, identify which constraints actually drive the design and which are secondary.",
+      },
+      {
+        title: "Think about the path, not just the destination",
+        content:
+          "Strong architecture responses usually explain migration and rollout, not just the end state.",
+      },
+      {
+        title: "Choose what to defer",
+        content:
+          "Version-one discipline matters. Good design reasoning includes what you would intentionally not build yet.",
+      },
+    ],
+    "tool-steering-challenge": [
+      {
+        title: "Constrain the model before asking for help",
+        content:
+          "Define what the AI is allowed to change, what it should not touch, and how success will be checked.",
+      },
+      {
+        title: "Validation matters more than prompt style",
+        content:
+          "Explain how generated output or generated reasoning will be verified before it is trusted.",
+      },
+      {
+        title: "Keep ownership explicit",
+        content:
+          "Look for the parts of the task where direct human judgment still has to own tradeoffs, risks, or business logic.",
+      },
     ],
   };
 
@@ -91,6 +166,7 @@ export default function App() {
   const [reviewerAssessment, setReviewerAssessment] = useState("");
   const [reviewerNotes, setReviewerNotes] = useState("");
   const [reviewerChecklist, setReviewerChecklist] = useState<Record<string, boolean>>({});
+  const [trainingHintsShown, setTrainingHintsShown] = useState(0);
   const [workspaceStatus, setWorkspaceStatus] = useState<{
     tone: "success" | "error";
     message: string;
@@ -116,7 +192,8 @@ export default function App() {
   ];
   const trainingPrompts = getTrainingPrompts(selected);
   const trainingChecklist = getTrainingChecklist(selected);
-  const workedExampleLinks = getWorkedExampleLinks(selected);
+  const workedExampleLinks: ChallengeWorkedExample[] = getWorkedExampleLinks(selected);
+  const trainingHints = getTrainingHints(selected);
 
   useEffect(() => {
     if (!selected) {
@@ -125,6 +202,10 @@ export default function App() {
 
     setNotes(window.localStorage.getItem(storageKey(selected.id, "notes")) ?? "");
     setResponse(window.localStorage.getItem(storageKey(selected.id, "response")) ?? "");
+    const savedHintsShown = Number(
+      window.localStorage.getItem(storageKey(selected.id, "trainingHintsShown")) ?? "0",
+    );
+    setTrainingHintsShown(Number.isFinite(savedHintsShown) ? savedHintsShown : 0);
     setReviewerOutcome(window.localStorage.getItem(storageKey(selected.id, "reviewerOutcome")) ?? "");
     setReviewerAssessment(
       window.localStorage.getItem(storageKey(selected.id, "reviewerAssessment")) ?? "",
@@ -150,6 +231,15 @@ export default function App() {
       window.localStorage.setItem(storageKey(selected.id, "response"), response);
     }
   }, [response, selected]);
+
+  useEffect(() => {
+    if (selected) {
+      window.localStorage.setItem(
+        storageKey(selected.id, "trainingHintsShown"),
+        String(trainingHintsShown),
+      );
+    }
+  }, [trainingHintsShown, selected]);
 
   useEffect(() => {
     if (selected) {
@@ -190,6 +280,7 @@ export default function App() {
       exportedAt,
       notes,
       response,
+      trainingHintsShown,
       reviewerOutcome,
       reviewerAssessment,
       reviewerNotes,
@@ -226,6 +317,7 @@ export default function App() {
         exportedAt?: string;
         notes?: string;
         response?: string;
+        trainingHintsShown?: number;
         reviewerOutcome?: string;
         reviewerAssessment?: string;
         reviewerNotes?: string;
@@ -270,6 +362,11 @@ export default function App() {
     setAppMode(payload.appMode === "training" ? "training" : "evaluation");
     setNotes(typeof payload.notes === "string" ? payload.notes : "");
     setResponse(typeof payload.response === "string" ? payload.response : "");
+    setTrainingHintsShown(
+      Number.isInteger(payload.trainingHintsShown) && payload.trainingHintsShown >= 0
+        ? payload.trainingHintsShown
+        : 0,
+    );
     setReviewerOutcome(typeof payload.reviewerOutcome === "string" ? payload.reviewerOutcome : "");
     setReviewerAssessment(
       typeof payload.reviewerAssessment === "string" ? payload.reviewerAssessment : "",
@@ -389,6 +486,34 @@ export default function App() {
           </section>
         )}
 
+        {appMode === "training" && (
+          <section className="panel training-intro">
+            <div className="section-heading">
+              <h3>Training Mode</h3>
+              <span className="source-path">Practice first, compare later</span>
+            </div>
+            <p className="training-copy">
+              Use this mode to work through the scenario deliberately. Start with your own notes and
+              response, use the reflection prompts and thinking checklist to sharpen your reasoning,
+              and only then compare against worked examples.
+            </p>
+          </section>
+        )}
+
+        {appMode === "evaluation" && (
+          <section className="panel evaluation-intro">
+            <div className="section-heading">
+              <h3>Evaluation Mode</h3>
+              <span className="source-path">Capture reasoning for review</span>
+            </div>
+            <p className="training-copy">
+              Use this mode to work through the scenario as a candidate or reviewer. Capture notes,
+              write a response, and, when reviewer mode is enabled, record structured assessment
+              against the challenge’s evaluation signals and rubric.
+            </p>
+          </section>
+        )}
+
         <header className="hero">
           <p className="eyebrow">{formatLabel(selected.archetype)}</p>
           <h2>{selected.title}</h2>
@@ -408,7 +533,7 @@ export default function App() {
         </section>
 
         <section className="panel">
-          <h3>Candidate Instructions</h3>
+          <h3>{appMode === "training" ? "Practice Instructions" : "Candidate Instructions"}</h3>
           <ul>
             {selected.candidate_instructions.map((instruction) => (
               <li key={instruction}>{instruction}</li>
@@ -417,7 +542,7 @@ export default function App() {
         </section>
 
         <section className="panel">
-          <h3>Evaluation Signals</h3>
+          <h3>{appMode === "training" ? "What Strong Thinking Should Surface" : "Evaluation Signals"}</h3>
           <ul>
             {selected.evaluation_signals.map((signal) => (
               <li key={signal}>{signal}</li>
@@ -425,7 +550,7 @@ export default function App() {
           </ul>
         </section>
 
-        {selected.rubric && (
+        {appMode === "evaluation" && selected.rubric && (
           <section className="panel">
             <h3>Rubric</h3>
             {selected.rubric.strong && (
@@ -453,7 +578,7 @@ export default function App() {
 
         <section className="panel">
           <div className="section-heading">
-            <h3>Artifacts</h3>
+            <h3>{appMode === "training" ? "Study Materials" : "Artifacts"}</h3>
             <span className="source-path">{selected.sourcePath}</span>
           </div>
           <div className="artifact-grid">
@@ -517,6 +642,50 @@ export default function App() {
                 </ul>
               </section>
             </section>
+
+            {trainingHints.length > 0 && (
+              <section className="panel">
+                <div className="section-heading">
+                  <h3>Progressive Hints</h3>
+                  <span className="source-path">
+                    Reveal only after pushing your own reasoning as far as you can
+                  </span>
+                </div>
+                <div className="hints-toolbar">
+                  <button
+                    type="button"
+                    className="tool-button"
+                    onClick={() =>
+                      setTrainingHintsShown((current) => Math.min(current + 1, trainingHints.length))
+                    }
+                    disabled={trainingHintsShown >= trainingHints.length}
+                  >
+                    {trainingHintsShown === 0 ? "Show first hint" : "Show next hint"}
+                  </button>
+                  <button
+                    type="button"
+                    className="tool-button"
+                    onClick={() => setTrainingHintsShown(0)}
+                    disabled={trainingHintsShown === 0}
+                  >
+                    Reset hints
+                  </button>
+                </div>
+                <div className="hint-list">
+                  {trainingHintsShown === 0 && (
+                    <p className="source-path">No hints revealed yet.</p>
+                  )}
+                  {trainingHints.slice(0, trainingHintsShown).map((hint, index) => (
+                    <article key={`${hint.title}-${index}`} className="hint-card">
+                      <strong>
+                        Hint {index + 1}: {hint.title}
+                      </strong>
+                      <p>{hint.content}</p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
 
             <section className="panel">
               <div className="section-heading">

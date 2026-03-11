@@ -39,4 +39,22 @@ rubric:
   weak:
     - Treats the problem as only a CRUD dashboard.
     - Ignores rollback, caching, or blast radius.
-
+training_support:
+  reflection_prompts:
+    - Which concerns belong in the control plane versus the request-path evaluation path?
+    - What parts of the migration are risky because of system behavior, not just implementation effort?
+    - What should a safe first version do well, and what should be intentionally deferred?
+  thinking_checklist:
+    - Name the highest-risk constraints before proposing architecture
+    - Explain degraded-mode behavior explicitly
+    - Separate migration strategy from target end state
+  hints:
+    - title: Separate control plane from evaluation path
+      content: The UI or admin API is not the core architecture problem. The critical question is how flags are evaluated safely in live systems.
+    - title: Design for degraded mode
+      content: Ask what should happen if the central flag-management service is unavailable while billing or onboarding traffic is still flowing.
+    - title: Migration is part of the architecture
+      content: A good answer explains how legacy hard-coded flags and the new system can coexist during rollout.
+  worked_examples:
+    - label: Architecture example review
+      href: /docs/example-review-architecture.md

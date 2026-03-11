@@ -39,4 +39,22 @@ rubric:
   weak:
     - Treats AI output as authoritative incident analysis.
     - Ignores data-handling and trust concerns.
-
+training_support:
+  reflection_prompts:
+    - Which parts of incident work are safe to delegate to AI, and which are not?
+    - How will you prevent AI-generated confidence from outrunning the evidence?
+    - What information would you sanitize or withhold before using an external model?
+  thinking_checklist:
+    - Separate observed facts from model-generated hypotheses
+    - Preserve human ownership of incident decisions
+    - Define how AI output will be verified before operational action
+  hints:
+    - title: Use AI for bounded support, not authority
+      content: Think about tasks like summarization, alternate hypotheses, or query formulation rather than handing root-cause ownership to the model.
+    - title: Protect sensitive context
+      content: The challenge includes explicit constraints around production data handling. Your workflow should account for them.
+    - title: Keep the incident timeline factual
+      content: Any AI-derived suggestion should be communicated as a hypothesis, not as an observed fact, until verified.
+  worked_examples:
+    - label: Tool Steering example review
+      href: /docs/example-review-tool-steering.md

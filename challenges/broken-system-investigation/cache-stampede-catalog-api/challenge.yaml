@@ -41,4 +41,22 @@ rubric:
   weak:
     - Focuses only on scaling the database.
     - Ignores the deploy clue and the request-path cache pattern.
-
+training_support:
+  reflection_prompts:
+    - What are the hard facts in the artifacts versus the hypotheses you are forming from them?
+    - Which evidence most strongly supports a cache-related explanation, and what evidence would weaken it?
+    - What would you mitigate immediately before proposing a redesign?
+  thinking_checklist:
+    - Restate the failure in your own words before diagnosing it
+    - Connect symptoms to a plausible mechanism, not just an overloaded dependency
+    - Separate immediate mitigation from durable prevention
+  hints:
+    - title: Focus on the repeated misses
+      content: The same key appears multiple times in a short window. Ask what that implies about how misses are handled under concurrency.
+    - title: Connect the deploy to the traffic shape
+      content: A small TTL change can become a large incident when traffic concentrates on a narrow set of hot keys.
+    - title: Name the mechanism, not just the symptom
+      content: It is not enough to say the database overloaded. Explain what request-path behavior caused that load spike.
+  worked_examples:
+    - label: Broken System example review
+      href: /docs/example-review.md

@@ -26,4 +26,16 @@ rubric:
     - Explains context-setting, scope control, and verification clearly.
   weak:
     - Treats AI output as trustworthy by default.
-
+training_support:
+  reflection_prompts:
+    - What parts of this task should AI accelerate, and what parts require direct judgment?
+    - How will you validate generated output before trusting it?
+  thinking_checklist:
+    - Constrain scope before asking for help
+    - Define verification steps before accepting output
+  hints:
+    - title: Replace with first coaching hint
+      content: Add a bounded nudge that helps the learner reason about scope, verification, or judgment.
+  worked_examples:
+    - label: Tool Steering example review
+      href: /docs/example-review-tool-steering.md

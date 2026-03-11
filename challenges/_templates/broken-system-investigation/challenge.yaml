@@ -27,4 +27,16 @@ rubric:
     - Connects symptoms to plausible underlying mechanisms.
   weak:
     - Offers generic advice without explaining the failure.
-
+training_support:
+  reflection_prompts:
+    - What are the strongest observed facts in the artifacts?
+    - Which hypotheses best explain the failure, and what evidence would weaken them?
+  thinking_checklist:
+    - Separate observation from inference
+    - Distinguish mitigation from durable prevention
+  hints:
+    - title: Replace with first coaching hint
+      content: Add a bounded nudge that helps the learner think without giving away the answer.
+  worked_examples:
+    - label: Broken System example review
+      href: /docs/example-review.md

@@ -42,4 +42,22 @@ rubric:
   weak:
     - Blames only the payment processor retries.
     - Ignores how downstream actions are triggered.
-
+training_support:
+  reflection_prompts:
+    - Which parts of this incident are provider behavior versus application design?
+    - Where is the real idempotency boundary, and what side effect actually needs protection?
+    - What would you do immediately to stop additional duplicate shipments?
+  thinking_checklist:
+    - Distinguish retries from the application behavior that made retries dangerous
+    - Look for transactional and persistence boundaries
+    - Describe how you would confirm the fix after rollout
+  hints:
+    - title: Retries are not always the real root cause
+      content: Ask why processor retries were able to create duplicate side effects instead of being harmless duplicates.
+    - title: Find the side-effect boundary
+      content: The important question is where shipment creation becomes irreversible and what protects that boundary.
+    - title: In-memory deduplication is a clue
+      content: Consider what happens when multiple stateless pods receive the same event and deduplication is not durable.
+  worked_examples:
+    - label: Broken System example review
+      href: /docs/example-review.md

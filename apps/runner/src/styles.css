@@ -249,6 +249,20 @@ button {
   margin-top: 0;
 }
 
+.training-intro {
+  background: linear-gradient(135deg, rgba(31, 49, 46, 0.96), rgba(22, 35, 39, 0.98));
+}
+
+.evaluation-intro {
+  background: linear-gradient(135deg, rgba(37, 34, 48, 0.96), rgba(21, 28, 39, 0.98));
+}
+
+.training-copy {
+  margin: 0;
+  max-width: 78ch;
+  color: #c5d2d7;
+}
+
 .multiline {
   white-space: pre-line;
 }
@@ -335,6 +349,30 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.hints-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.hint-list {
+  display: grid;
+  gap: 12px;
+}
+
+.hint-card {
+  border: 1px solid rgba(231, 236, 239, 0.08);
+  border-radius: 14px;
+  padding: 14px;
+  background: #121b21;
+}
+
+.hint-card p {
+  margin: 8px 0 0;
+  color: #cfdae0;
 }
 
 .worked-example-link {

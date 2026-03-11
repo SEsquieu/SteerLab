@@ -38,4 +38,22 @@ rubric:
   weak:
     - Recommends a fashionable stack without explaining why it fits.
     - Ignores data ownership and schema drift.
-
+training_support:
+  reflection_prompts:
+    - Which guarantees actually matter for this system, and which can be relaxed?
+    - Where should schema validation, replay, and idempotency live?
+    - How do cost and team maturity change what a sensible design looks like?
+  thinking_checklist:
+    - Start with the current failure modes before proposing new components
+    - Match the design to team capacity and operating reality
+    - Distinguish ingestion reliability from downstream consumer needs
+  hints:
+    - title: Treat this as a producer-consumer system
+      content: Ask where contracts, validation, and replay semantics belong rather than thinking only in terms of infrastructure components.
+    - title: Not every analytics need has the same freshness requirement
+      content: Separate near-real-time use cases from batch-friendly use cases before deciding how much streaming complexity is warranted.
+    - title: Cost and maturity matter
+      content: A design that the team cannot operate well is not a strong answer, even if it sounds modern.
+  worked_examples:
+    - label: Architecture example review
+      href: /docs/example-review-architecture.md

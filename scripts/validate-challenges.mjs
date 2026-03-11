@@ -101,6 +101,84 @@ function validateRubric(challenge, filePath) {
   }
 }
 
+function validateTrainingSupport(challenge, filePath) {
+  if (!challenge.training_support) {
+    return;
+  }
+
+  if (typeof challenge.training_support !== "object" || Array.isArray(challenge.training_support)) {
+    errors.push(`${filePath}: \`training_support\` must be an object when provided.`);
+    return;
+  }
+
+  for (const fieldName of ["reflection_prompts", "thinking_checklist"]) {
+    const value = challenge.training_support[fieldName];
+    if (value === undefined) {
+      continue;
+    }
+
+    if (!Array.isArray(value)) {
+      errors.push(`${filePath}: \`training_support.${fieldName}\` must be an array.`);
+      continue;
+    }
+
+    value.forEach((item, index) => {
+      if (!isNonEmptyString(item)) {
+        errors.push(
+          `${filePath}: \`training_support.${fieldName}[${index}]\` must be a non-empty string.`,
+        );
+      }
+    });
+  }
+
+  const hints = challenge.training_support.hints;
+  if (hints !== undefined) {
+    if (!Array.isArray(hints)) {
+      errors.push(`${filePath}: \`training_support.hints\` must be an array.`);
+    } else {
+      hints.forEach((item, index) => {
+        if (!item || typeof item !== "object" || Array.isArray(item)) {
+          errors.push(`${filePath}: \`training_support.hints[${index}]\` must be an object.`);
+          return;
+        }
+
+        for (const key of ["title", "content"]) {
+          if (!isNonEmptyString(item[key])) {
+            errors.push(
+              `${filePath}: \`training_support.hints[${index}].${key}\` must be a non-empty string.`,
+            );
+          }
+        }
+      });
+    }
+  }
+
+  const workedExamples = challenge.training_support.worked_examples;
+  if (workedExamples === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(workedExamples)) {
+    errors.push(`${filePath}: \`training_support.worked_examples\` must be an array.`);
+    return;
+  }
+
+  workedExamples.forEach((item, index) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      errors.push(`${filePath}: \`training_support.worked_examples[${index}]\` must be an object.`);
+      return;
+    }
+
+    for (const key of ["label", "href"]) {
+      if (!isNonEmptyString(item[key])) {
+        errors.push(
+          `${filePath}: \`training_support.worked_examples[${index}].${key}\` must be a non-empty string.`,
+        );
+      }
+    }
+  });
+}
+
 function validateChallenge(filePath) {
   const source = fs.readFileSync(filePath, "utf8");
   let challenge;
@@ -141,6 +219,7 @@ function validateChallenge(filePath) {
   validateStringList(challenge.evaluation_signals, "evaluation_signals", filePath);
   validateArtifactList(challenge, challengeDir, filePath);
   validateRubric(challenge, filePath);
+  validateTrainingSupport(challenge, filePath);
 
   validatedCount += 1;
 }

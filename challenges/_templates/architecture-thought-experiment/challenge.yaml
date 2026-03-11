@@ -26,4 +26,16 @@ rubric:
     - Matches the design to the team and system context.
   weak:
     - Treats the problem as a stack-selection exercise.
-
+training_support:
+  reflection_prompts:
+    - Which constraints matter most here?
+    - What would a safe first version do well?
+  thinking_checklist:
+    - Name the key tradeoffs explicitly
+    - Separate target architecture from migration plan
+  hints:
+    - title: Replace with first coaching hint
+      content: Add a bounded nudge that helps the learner think without dictating the architecture.
+  worked_examples:
+    - label: Architecture example review
+      href: /docs/example-review-architecture.md

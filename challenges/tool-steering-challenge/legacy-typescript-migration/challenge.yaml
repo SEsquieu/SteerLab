@@ -39,3 +39,22 @@ rubric:
   weak:
     - Describes AI use in vague terms.
     - Assumes stricter typing automatically makes the migration safe.
+training_support:
+  reflection_prompts:
+    - What is the smallest safe migration slice you would attempt first?
+    - Which parts of this task can the model accelerate, and which parts need direct human judgment?
+    - How will you detect generated changes that appear type-safe but alter behavior?
+  thinking_checklist:
+    - Define success criteria before asking the model to change code
+    - Constrain scope explicitly in prompts and in diff review
+    - Verify generated output with tests, behavior checks, and manual judgment
+  hints:
+    - title: Pick a smaller first slice
+      content: A safe first move is usually not “convert the whole module.” Think about the smallest change that reveals whether the workflow is sound.
+    - title: Prompt for bounded output
+      content: Ask the model for a narrow transformation with explicit constraints instead of a broad refactor.
+    - title: Watch for false confidence from types
+      content: Generated code can satisfy the compiler while still changing runtime behavior or encoding the wrong business assumptions.
+  worked_examples:
+    - label: Tool Steering example review
+      href: /docs/example-review-tool-steering.md

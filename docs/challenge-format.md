@@ -42,6 +42,7 @@ Optional fields:
 
 - `tags`
 - `rubric`
+- `training_support`
 - `author_notes`
 - `reference_solution_notes`
 
@@ -119,6 +120,35 @@ Reviewer-facing guidance describing what strong responses tend to demonstrate.
 ### `rubric`
 
 Optional structured rubric. This should help reviewers distinguish strong, acceptable, and weak responses without pretending every challenge has a single correct answer.
+
+### `training_support`
+
+Optional training-oriented scaffolding for Training Mode.
+
+This can include:
+
+- `reflection_prompts`
+- `thinking_checklist`
+- `hints`
+- `worked_examples`
+
+Example:
+
+```yaml
+training_support:
+  reflection_prompts:
+    - What constraints matter most here?
+    - What would you defer in a safe first version?
+  thinking_checklist:
+    - State the problem in your own words
+    - Name the highest-risk assumptions
+  hints:
+    - title: Start with the boundary
+      content: Clarify which system component actually owns this decision or failure.
+  worked_examples:
+    - label: Architecture example review
+      href: /docs/example-review-architecture.md
+```
 
 ### `difficulty`
 
@@ -224,6 +254,19 @@ evaluation_signals:
   - Uses AI as a bounded accelerator rather than a source of authority.
   - Defines scope, acceptance criteria, and verification steps clearly.
   - Anticipates failure modes in generated code and generated reasoning.
+training_support:
+  reflection_prompts:
+    - What parts of this task should the model help with, and what parts need direct human judgment?
+    - How will you constrain scope before asking the model for help?
+  thinking_checklist:
+    - State what success means before generating code
+    - Name how generated output will be verified
+  hints:
+    - title: Constrain before you generate
+      content: Decide what the model is allowed to change and how you will verify the result.
+  worked_examples:
+    - label: Tool Steering example review
+      href: /docs/example-review-tool-steering.md
 ```
 
 ## Authoring Guidance
