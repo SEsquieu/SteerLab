@@ -36,6 +36,8 @@ Before submitting a challenge:
 - read [`docs/challenge-design-guide.md`](./docs/challenge-design-guide.md)
 - read [`docs/challenge-format.md`](./docs/challenge-format.md)
 - read [`docs/example-review.md`](./docs/example-review.md) for a concrete reviewer walkthrough
+- read [`docs/example-review-architecture.md`](./docs/example-review-architecture.md) for a worked architecture review example
+- read [`docs/example-review-tool-steering.md`](./docs/example-review-tool-steering.md) for a worked tool steering review example
 - start from [`challenges/_templates/`](./challenges/_templates) when possible
 - run `npm run validate:challenges`
 - be explicit about the intended archetype and primary signals

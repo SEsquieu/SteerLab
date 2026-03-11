@@ -193,6 +193,8 @@ Read the core docs:
 - [`docs/challenge-design-guide.md`](./docs/challenge-design-guide.md)
 - [`docs/challenge-format.md`](./docs/challenge-format.md)
 - [`docs/example-review.md`](./docs/example-review.md)
+- [`docs/example-review-architecture.md`](./docs/example-review-architecture.md)
+- [`docs/example-review-tool-steering.md`](./docs/example-review-tool-steering.md)
 - [`docs/reviewer-guide.md`](./docs/reviewer-guide.md)
 
 The current seed library includes:
@@ -226,6 +228,8 @@ Start here:
 - [`ROADMAP.md`](./ROADMAP.md)
 - [`docs/challenge-design-guide.md`](./docs/challenge-design-guide.md)
 - [`docs/example-review.md`](./docs/example-review.md)
+- [`docs/example-review-architecture.md`](./docs/example-review-architecture.md)
+- [`docs/example-review-tool-steering.md`](./docs/example-review-tool-steering.md)
 - [`docs/reviewer-guide.md`](./docs/reviewer-guide.md)
 
 ## Early Roadmap
