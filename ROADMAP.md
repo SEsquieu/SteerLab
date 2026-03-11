@@ -10,6 +10,7 @@ This roadmap is directional. It describes likely phases of the project, not fixe
 - ship a minimal local runner that reflects the model clearly
 - document the philosophy behind the framework
 - make explicit that the framework is extensible, but that new archetypes should meet a high bar
+- define the relationship between the shared core, Evaluation Mode, and Training Mode
 
 ## Phase 1: Strengthen the Open Challenge Library
 
@@ -33,6 +34,14 @@ This roadmap is directional. It describes likely phases of the project, not fixe
 - explore reviewer annotation workflows
 - compare freeform responses with more structured reasoning capture
 - make challenge timing and navigation clearer
+
+## Phase 3B: Training Workflows
+
+- define Training Mode as a first-class sibling to Evaluation Mode
+- add guided reflection and thinking checklists
+- experiment with worked example reveal flows
+- explore practice-oriented challenge navigation
+- support learning loops without weakening challenge realism
 
 ## Phase 4: AI Interaction and Reasoning Trace Capture
 
@@ -80,5 +89,6 @@ Longer-term success:
 
 - a broader open challenge library
 - better reviewer and authoring workflows
+- clearer training workflows for practicing AI-era engineering judgment
 - clearer public thinking about how to evaluate engineering in an AI-normal world
 - reuse by others without needing a central proprietary platform

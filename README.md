@@ -8,6 +8,11 @@ The project starts from a simple observation: much of modern engineering work no
 
 This repository is a first-pass framework, not a finished standard. It combines a challenge model, seed scenarios, and a lightweight reference runner so contributors can debate the problem in public and improve the artifacts in public.
 
+The project now distinguishes between a shared core framework and two parallel application modes:
+
+- Evaluation Mode
+- Training Mode
+
 ## Why This Exists
 
 Many engineering interviews still rely heavily on signals that are convenient to administer but weakly aligned with real work:
@@ -118,8 +123,37 @@ SteerLab is:
 - an open challenge format centered on the three archetypes above
 - a seed library of realistic engineering scenarios
 - a local-first reference runner for exploring candidate workflows
+- a framework that can support both evaluation and training uses
 - a public place to debate evaluation philosophy and rubric design
 - a draft reference implementation, not a finished platform
+
+## Shared Core And Two Modes
+
+SteerLab is best understood as one shared framework with two parallel modes built on top of it.
+
+Shared core:
+
+- archetypes
+- challenge schema
+- challenge library
+- challenge design guidance
+- reference runner
+
+Evaluation Mode:
+
+- candidate responses
+- reviewer workflows
+- rubrics
+- assessment consistency
+
+Training Mode:
+
+- guided reflection
+- learning scaffolds
+- worked examples
+- AI-era engineering practice
+
+The challenge library should remain shared as long as possible. The project should avoid prematurely splitting content into separate challenge systems unless the workflows genuinely diverge.
 
 ## Project Goals
 
@@ -191,11 +225,13 @@ Read the core docs:
 
 - [`docs/challenge-archetypes.md`](./docs/challenge-archetypes.md)
 - [`docs/challenge-design-guide.md`](./docs/challenge-design-guide.md)
+- [`docs/evaluation-mode.md`](./docs/evaluation-mode.md)
 - [`docs/challenge-format.md`](./docs/challenge-format.md)
 - [`docs/example-review.md`](./docs/example-review.md)
 - [`docs/example-review-architecture.md`](./docs/example-review-architecture.md)
 - [`docs/example-review-tool-steering.md`](./docs/example-review-tool-steering.md)
 - [`docs/reviewer-guide.md`](./docs/reviewer-guide.md)
+- [`docs/training-mode.md`](./docs/training-mode.md)
 
 The current seed library includes:
 
@@ -227,10 +263,12 @@ Start here:
 - [`MANIFESTO.md`](./MANIFESTO.md)
 - [`ROADMAP.md`](./ROADMAP.md)
 - [`docs/challenge-design-guide.md`](./docs/challenge-design-guide.md)
+- [`docs/evaluation-mode.md`](./docs/evaluation-mode.md)
 - [`docs/example-review.md`](./docs/example-review.md)
 - [`docs/example-review-architecture.md`](./docs/example-review-architecture.md)
 - [`docs/example-review-tool-steering.md`](./docs/example-review-tool-steering.md)
 - [`docs/reviewer-guide.md`](./docs/reviewer-guide.md)
+- [`docs/training-mode.md`](./docs/training-mode.md)
 
 ## Early Roadmap
 

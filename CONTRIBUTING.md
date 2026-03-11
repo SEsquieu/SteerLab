@@ -14,6 +14,40 @@ If you are proposing a challenge, rubric, or workflow change, start by being exp
 
 The framework is extensible, but new archetypes should be proposed rarely and held to a high bar. In most cases, contributors should propose new challenge categories within an existing archetype rather than expanding the archetype set itself.
 
+The project also distinguishes between:
+
+- shared core framework work
+- Evaluation Mode work
+- Training Mode work
+
+When proposing changes, be explicit about which layer your contribution belongs to.
+
+## Modes
+
+Shared core:
+
+- archetypes
+- challenge schema
+- challenge content
+- challenge design guidance
+- base runner primitives
+
+Evaluation Mode:
+
+- reviewer workflows
+- candidate response capture
+- rubrics
+- assessment-oriented runner features
+
+Training Mode:
+
+- reflection scaffolds
+- hints and guided practice
+- learning-oriented runner features
+- worked examples and coaching patterns
+
+Add to the shared core if the change benefits both modes. Add to Evaluation Mode or Training Mode if the change is specific to one of those applications.
+
 ## Contribution Principles
 
 - Prefer realism over gimmicks.
@@ -34,10 +68,12 @@ Before submitting a challenge:
 
 - read [`docs/challenge-archetypes.md`](./docs/challenge-archetypes.md)
 - read [`docs/challenge-design-guide.md`](./docs/challenge-design-guide.md)
+- read [`docs/evaluation-mode.md`](./docs/evaluation-mode.md)
 - read [`docs/challenge-format.md`](./docs/challenge-format.md)
 - read [`docs/example-review.md`](./docs/example-review.md) for a concrete reviewer walkthrough
 - read [`docs/example-review-architecture.md`](./docs/example-review-architecture.md) for a worked architecture review example
 - read [`docs/example-review-tool-steering.md`](./docs/example-review-tool-steering.md) for a worked tool steering review example
+- read [`docs/training-mode.md`](./docs/training-mode.md)
 - start from [`challenges/_templates/`](./challenges/_templates) when possible
 - run `npm run validate:challenges`
 - be explicit about the intended archetype and primary signals
@@ -124,6 +160,7 @@ The current runner is intentionally lightweight. Useful contributions include:
 - richer artifact rendering
 - improved note and response workflows
 - reviewer mode
+- training mode scaffolds
 - AI interaction trace capture experiments
 - export/import or replay flows
 
