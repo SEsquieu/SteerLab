@@ -148,12 +148,14 @@ Evaluation Mode:
 - reviewer workflows
 - rubrics
 - assessment consistency
+- authentic AI-collaboration review when model use is allowed
 
 Training Mode:
 
 - guided reflection
 - learning scaffolds
 - worked examples
+- progressive hints
 - AI-era engineering practice
 
 The challenge library should remain shared as long as possible. The project should avoid prematurely splitting content into separate challenge systems unless the workflows genuinely diverge.
@@ -197,12 +199,15 @@ The challenge library should remain shared as long as possible. The project shou
 
 The repository includes a minimal React + Vite + TypeScript runner. It currently:
 
-- lists available challenges
-- shows archetype, difficulty, time estimate, and evaluation signals
-- renders challenge context and supplied artifacts
-- provides local note and response fields in the browser
+- lists available challenges with archetype, difficulty, and estimated time
+- supports both Evaluation Mode and Training Mode
+- renders challenge context, instructions, and supplied artifacts
+- stores local notes and responses in the browser
+- supports reviewer workflows in Evaluation Mode
+- supports reflection prompts, thinking checklists, progressive hints, and worked-example reveal in Training Mode
+- supports local export/import of workspace state
 
-It does not yet implement reviewer workflows, scoring, persistence beyond local storage, AI trace ingestion, or replayable candidate sessions.
+It is still intentionally lightweight. It does not yet implement live model-provider integration, authentic AI trace capture, replayable sessions, or richer artifact viewers for larger bundles.
 
 ## Getting Started
 
@@ -279,17 +284,17 @@ Start here:
 
 Near-term:
 
-- refine the archetype model and challenge schema
 - expand the open challenge library
-- improve artifact rendering and reviewer guidance
-- add better support for candidate reasoning capture
-- explore optional AI interaction trace capture
+- deepen Training Mode without turning it into generic tutorialware
+- improve artifact rendering and challenge navigation
+- refine reviewer guidance and evaluation workflows
+- define the first practical boundaries for optional model integration and trace capture
 
 Longer-term:
 
 - richer challenge authoring tools
 - replayable reasoning traces
-- reviewer workflows and comparative rubric experiments
+- stronger support for authentic candidate-model interaction review
 - stronger artifact support for logs, code, diffs, and diagrams
 - broader open-source challenge library growth
 

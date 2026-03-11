@@ -57,7 +57,7 @@ Examples of training-specific features include:
 - reflection prompts
 - thinking checklists
 - guided hints
-- progressive reveal of context
+- progressive reveal of hints and examples
 - worked example comparisons
 - coaching scaffolds
 - model-backed scenario generation and coaching under explicit rules
@@ -75,6 +75,8 @@ Training Mode should reinforce habits such as:
 - treating leverage as something to steer, not something to obey
 
 The goal is not prompt fluency by itself. The goal is better engineering judgment under leverage.
+
+In the current reference runner, Training Mode intentionally avoids reviewer-facing artifacts such as rubrics and assessment framing. It should feel like guided practice, not like evaluation with softer wording.
 
 ## Boundaries
 

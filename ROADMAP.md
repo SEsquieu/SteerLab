@@ -4,6 +4,8 @@ This roadmap is directional. It describes likely phases of the project, not fixe
 
 ## Phase 0: Establish the Core Archetypes
 
+Status: largely complete for the initial alpha.
+
 - center the repository on the three canonical archetypes
 - refine the challenge schema around archetype-first design
 - publish a small but serious seed library
@@ -14,6 +16,8 @@ This roadmap is directional. It describes likely phases of the project, not fixe
 
 ## Phase 1: Strengthen the Open Challenge Library
 
+Status: active.
+
 - expand the number of challenges within each archetype
 - diversify domains, seniority levels, and system types
 - improve challenge authoring guidance
@@ -22,6 +26,8 @@ This roadmap is directional. It describes likely phases of the project, not fixe
 
 ## Phase 2: Richer Artifact Support
 
+Status: not started in a serious way.
+
 - improve rendering for logs, code, configs, traces, and diagrams
 - add conventions for larger artifact bundles
 - explore diff-aware and multi-file scenario display
@@ -29,21 +35,27 @@ This roadmap is directional. It describes likely phases of the project, not fixe
 
 ## Phase 3: Candidate and Reviewer Workflows
 
-- add reviewer mode and rubric-specific views
-- support candidate response export/import
+Status: partially complete.
+
+- deepen reviewer mode and rubric-specific views
+- improve candidate response export/import and replay ergonomics
 - explore reviewer annotation workflows
 - compare freeform responses with more structured reasoning capture
 - make challenge timing and navigation clearer
 
 ## Phase 3B: Training Workflows
 
-- define Training Mode as a first-class sibling to Evaluation Mode
-- add guided reflection and thinking checklists
-- experiment with worked example reveal flows
-- explore practice-oriented challenge navigation
+Status: partially complete.
+
+- deepen guided reflection and thinking checklists
+- expand worked example and compare-against-example flows
+- improve practice-oriented challenge navigation
 - support learning loops without weakening challenge realism
+- add stronger training-specific scaffolds while keeping shared challenge content intact
 
 ## Phase 4: Model Integration And Reasoning Trace Capture
+
+Status: architecture defined, implementation largely open.
 
 - define a model-agnostic provider abstraction
 - separate scenario generation, coaching, and candidate tool interaction as distinct roles
@@ -92,7 +104,7 @@ Near-term success:
 - the three archetypes feel coherent and useful
 - contributors add realistic challenges and critique the framework seriously
 - the reference runner is simple enough to inspect and extend
-- the docs create a shared vocabulary for AI-era engineering evaluation
+- the docs create a shared vocabulary for AI-era engineering practice and evaluation
 
 Longer-term success:
 

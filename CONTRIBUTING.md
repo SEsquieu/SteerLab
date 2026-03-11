@@ -47,6 +47,8 @@ Training Mode:
 - learning-oriented runner features
 - worked examples and coaching patterns
 
+The same challenge should stay usable across both modes whenever practical. Prefer extending shared challenge metadata over forking content into parallel challenge libraries too early.
+
 Add to the shared core if the change benefits both modes. Add to Evaluation Mode or Training Mode if the change is specific to one of those applications.
 
 ## Contribution Principles
@@ -163,6 +165,7 @@ The current runner is intentionally lightweight. Useful contributions include:
 - improved note and response workflows
 - reviewer mode
 - training mode scaffolds
+- clearer mode-specific UX boundaries
 - AI interaction trace capture experiments
 - model-provider integration that preserves the framework boundary
 - export/import or replay flows

@@ -132,6 +132,8 @@ This can include:
 - `hints`
 - `worked_examples`
 
+This block is for learning scaffolds, not reviewer judgment artifacts. Keep rubric and assessment language out of `training_support`.
+
 Example:
 
 ```yaml
@@ -307,4 +309,4 @@ Likely future additions:
 - AI interaction trace schema
 - replayable reasoning traces
 
-This draft deliberately keeps those out of scope for now.
+This draft keeps those extensions optional. The current schema is already expected to support both Evaluation Mode and Training Mode through shared challenge content plus mode-specific metadata such as `training_support`.

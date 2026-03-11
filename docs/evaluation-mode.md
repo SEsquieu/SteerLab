@@ -59,6 +59,8 @@ Examples of evaluation-specific features include:
 - export/import of assessment artifacts
 - optional capture of authentic candidate-model interaction traces
 
+In the current reference runner, Evaluation Mode is the place where rubric language, reviewer checklists, and assessment-oriented summaries belong. That distinction should stay explicit so Training Mode can remain a learning workflow rather than an assessment screen with hints added on.
+
 See [`docs/llm-integration.md`](./llm-integration.md) for the distinction between training-side coaching and evaluation-side candidate tool use.
 
 ## Reviewer Mindset

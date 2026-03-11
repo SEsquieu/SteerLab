@@ -131,6 +131,8 @@ The distinction is important:
 
 That single distinction should guide many future product decisions.
 
+It also means the same provider abstraction may sit underneath both modes while exposing very different experiences above it. Shared plumbing is desirable. Shared behavior is not.
+
 ### Training Mode
 
 Relevant model roles:
@@ -215,4 +217,3 @@ The clean mental model is:
 - Candidate Tool Interface: preserves authentic evaluation-time model use
 
 The framework remains the product. The model remains an interchangeable component.
-

@@ -55,6 +55,13 @@ These three archetypes are not the whole field, but together they describe a lar
 
 That is why they sit at the center of this project.
 
+SteerLab also treats those archetypes as shared foundations rather than single-use interview content. The same core scenarios can support both evaluation and training:
+
+- evaluation asks how well someone reasoned
+- training asks how someone can learn to reason better
+
+That split matters because the project is not only about measuring judgment. It is also about helping engineers build better habits around debugging, architecture, validation, and AI-assisted work.
+
 ## What This Project Believes
 
 SteerLab takes several positions seriously.
@@ -66,6 +73,10 @@ That includes diagnosis, boundary definition, tradeoff analysis, validation disc
 AI use should be evaluated openly, not ignored.
 
 Banning AI from evaluation often makes the exercise less realistic. Pretending AI changes nothing makes the exercise less honest. We need formats that examine how engineers actually use leverage, including how they verify and constrain it.
+
+AI use should also be taught responsibly, not treated as a shortcut.
+
+Teams are increasingly exposed to a failure mode where generated output moves faster than engineering judgment. Better tooling alone will not fix that. Engineers need practice in constraining model scope, validating generated work, and reasoning about system consequences before shipping.
 
 Open-source exploration is the right medium.
 
