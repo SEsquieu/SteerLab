@@ -384,10 +384,21 @@ button {
   color: #dfe7eb;
   padding: 10px 14px;
   text-decoration: none;
+  cursor: pointer;
+}
+
+.worked-example-link.active {
+  border-color: #d2a85c;
+  background: rgba(210, 168, 92, 0.14);
 }
 
 .worked-example-link:hover {
   background: #1a242b;
+}
+
+.worked-example-content {
+  white-space: pre-wrap;
+  line-height: 1.55;
 }
 
 .artifact-card {

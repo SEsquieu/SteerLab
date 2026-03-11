@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { challenges } from "./challenges";
 import type { ChallengeTrainingHint, ChallengeWorkedExample, LoadedChallenge } from "./types";
+import { workedExampleContentByHref } from "./workedExamples";
 
 type AppMode = "evaluation" | "training";
 
@@ -167,6 +168,7 @@ export default function App() {
   const [reviewerNotes, setReviewerNotes] = useState("");
   const [reviewerChecklist, setReviewerChecklist] = useState<Record<string, boolean>>({});
   const [trainingHintsShown, setTrainingHintsShown] = useState(0);
+  const [selectedWorkedExampleHref, setSelectedWorkedExampleHref] = useState<string | null>(null);
   const [workspaceStatus, setWorkspaceStatus] = useState<{
     tone: "success" | "error";
     message: string;
@@ -194,6 +196,12 @@ export default function App() {
   const trainingChecklist = getTrainingChecklist(selected);
   const workedExampleLinks: ChallengeWorkedExample[] = getWorkedExampleLinks(selected);
   const trainingHints = getTrainingHints(selected);
+  const selectedWorkedExample = workedExampleLinks.find(
+    (example) => example.href === selectedWorkedExampleHref,
+  );
+  const selectedWorkedExampleContent = selectedWorkedExampleHref
+    ? workedExampleContentByHref[selectedWorkedExampleHref] ?? null
+    : null;
 
   useEffect(() => {
     if (!selected) {
@@ -218,6 +226,7 @@ export default function App() {
     } catch {
       setReviewerChecklist({});
     }
+    setSelectedWorkedExampleHref(null);
   }, [selected]);
 
   useEffect(() => {
@@ -694,12 +703,37 @@ export default function App() {
               </div>
               <div className="worked-examples">
                 {workedExampleLinks.map((link) => (
-                  <a key={link.href} className="worked-example-link" href={link.href} target="_blank" rel="noreferrer">
+                  <button
+                    key={link.href}
+                    type="button"
+                    className={
+                      selectedWorkedExampleHref === link.href
+                        ? "worked-example-link active"
+                        : "worked-example-link"
+                    }
+                    onClick={() => setSelectedWorkedExampleHref(link.href)}
+                  >
                     {link.label}
-                  </a>
+                  </button>
                 ))}
               </div>
             </section>
+
+            {selectedWorkedExample && selectedWorkedExampleContent && (
+              <section className="panel">
+                <div className="section-heading">
+                  <h3>{selectedWorkedExample.label}</h3>
+                  <button
+                    type="button"
+                    className="tool-button"
+                    onClick={() => setSelectedWorkedExampleHref(null)}
+                  >
+                    Hide example
+                  </button>
+                </div>
+                <pre className="worked-example-content">{selectedWorkedExampleContent}</pre>
+              </section>
+            )}
           </>
         )}
 
