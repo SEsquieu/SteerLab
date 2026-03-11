@@ -8,6 +8,8 @@ This document explains the three canonical SteerLab challenge archetypes:
 
 These are not meant to cover every engineering responsibility. They are meant to provide a serious and coherent foundation for evaluating much of real engineering work in an AI-normal environment.
 
+They are the current core archetypes of the project, not a permanent claim that all meaningful engineering evaluation must fit inside exactly three buckets forever.
+
 ## Why Archetypes Matter
 
 Engineering evaluation often goes wrong when challenge design is vague about what it is actually trying to measure. A candidate is given a task, but the underlying signal is unclear. Reviewers then score against instinct rather than shared criteria.
@@ -20,6 +22,19 @@ Each archetype names:
 - the primary competence signals the challenge is intended to surface
 - the kinds of artifacts that make the exercise realistic
 - the reviewer mindset needed to evaluate responses fairly
+
+## Why Start With Only Three
+
+The project starts with three archetypes on purpose.
+
+Too many archetypes too early would make the framework vague, unstable, and easy to dilute. The current set is meant to provide a strong, legible center of gravity for the project.
+
+The intended discipline is:
+
+- new challenges and categories should be added often
+- new archetypes should be added rarely
+
+That keeps the framework extensible without letting it collapse into taxonomy sprawl.
 
 ## 1. Broken System Investigation
 
@@ -215,3 +230,19 @@ These archetypes correspond to three broad modes of engineering work:
 - Tool Steering Challenge: use AI leverage responsibly
 
 Together, they provide a more serious framework for evaluation than shallow code puzzles alone. They still leave open many questions about review, bias, scope, and scoring. That is expected. The point of this repository is to make those questions concrete enough to explore in the open.
+
+## When a New Archetype Might Be Justified
+
+The project should not add new archetypes casually.
+
+A new archetype should clear a high bar. In practice, that means it should:
+
+- surface a materially distinct engineering signal
+- require a meaningfully different challenge shape
+- call for different artifacts or reviewer logic
+- represent a substantial class of real engineering work
+- not fit cleanly as a category within an existing archetype
+
+If a proposal can be modeled as a new challenge category, that is usually the better move.
+
+This is how the framework can remain open to growth without losing conceptual clarity.

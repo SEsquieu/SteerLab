@@ -12,6 +12,8 @@ This repository is organized around three canonical challenge archetypes:
 
 If you are proposing a challenge, rubric, or workflow change, start by being explicit about which archetype it belongs to and what competence signals it is intended to surface.
 
+The framework is extensible, but new archetypes should be proposed rarely and held to a high bar. In most cases, contributors should propose new challenge categories within an existing archetype rather than expanding the archetype set itself.
+
 ## Contribution Principles
 
 - Prefer realism over gimmicks.
@@ -56,6 +58,19 @@ Examples:
 - Broken System Investigation: incident analysis, production regressions, reliability failures, integration anomalies
 - Architecture Thought Experiment: migrations, scaling decisions, boundary design, rollout planning
 - Tool Steering Challenge: AI-assisted refactors, AI-assisted incident support, AI-guided implementation planning
+
+## Proposing a New Archetype
+
+This should be uncommon.
+
+If you believe the framework needs a new archetype, explain:
+
+- why the proposed work does not fit an existing archetype
+- what materially distinct competence signal it surfaces
+- what different artifacts or reviewer approach it requires
+- why it reflects a substantial class of real engineering work
+
+The default bias should be toward adding categories, examples, and reviewer guidance before adding a new archetype.
 
 ## Improving Challenge Design
 

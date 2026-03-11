@@ -31,7 +31,7 @@ SteerLab exists to explore evaluation formats that surface those abilities more 
 
 ## The Three Core Archetypes
 
-SteerLab organizes challenges around three canonical archetypes. Together, they aim to cover a large portion of real engineering work.
+SteerLab currently organizes challenges around three canonical archetypes. Together, they aim to cover a large portion of real engineering work.
 
 ### 1. Broken System Investigation
 
@@ -108,6 +108,8 @@ Taken together, these archetypes map to three broad modes of engineering work:
 - Tool Steering Challenge: responsibly using AI leverage
 
 This does not cover every engineering responsibility. It does provide a more serious starting point than shallow coding tests for evaluating how someone works with context, ambiguity, leverage, and judgment.
+
+These three archetypes are the project’s current core model, not a claim of final exhaustive taxonomy. The framework is meant to remain extensible, but the bar for adding new archetypes should stay high. New challenge categories should be common; new archetypes should be rare.
 
 ## What This Project Is
 

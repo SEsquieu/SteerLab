@@ -9,6 +9,7 @@ This roadmap is directional. It describes likely phases of the project, not fixe
 - publish a small but serious seed library
 - ship a minimal local runner that reflects the model clearly
 - document the philosophy behind the framework
+- make explicit that the framework is extensible, but that new archetypes should meet a high bar
 
 ## Phase 1: Strengthen the Open Challenge Library
 
@@ -60,6 +61,7 @@ This roadmap is directional. It describes likely phases of the project, not fixe
 ## Open Questions
 
 - Which signals best capture engineering judgment across the three archetypes?
+- Are the current archetypes sufficient, and under what conditions would adding a new one be justified?
 - How much structure should candidate responses require?
 - How should AI use be captured without rewarding performance theater?
 - What kinds of reviewer prompts produce the most reliable judgments?
