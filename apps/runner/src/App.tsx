@@ -9,6 +9,8 @@ import type {
 import { workedExampleContentByHref } from "./workedExamples";
 
 type AppMode = "evaluation" | "training";
+type DifficultyFilter = "all" | "intro" | "intermediate" | "advanced";
+type TimeFilter = "all" | "short" | "medium" | "long";
 type TrainingComparisonReflectionField = "missed" | "overIndexed" | "keep" | "revise";
 type TrainingComparisonReflection = Record<TrainingComparisonReflectionField, string>;
 
@@ -38,6 +40,62 @@ const storageKey = (
 
 function formatLabel(value: string) {
   return value.replace(/-/g, " ");
+}
+
+function hasAuthoredTrainingSupport(challenge: LoadedChallenge) {
+  const trainingSupport = challenge.training_support;
+
+  if (!trainingSupport) {
+    return false;
+  }
+
+  return [
+    trainingSupport.reflection_prompts,
+    trainingSupport.thinking_checklist,
+    trainingSupport.worked_examples,
+    trainingSupport.hints,
+    trainingSupport.checkpoints,
+  ].some((items) => Array.isArray(items) && items.length > 0);
+}
+
+function matchesTimeFilter(estimatedTimeMinutes: number, filter: TimeFilter) {
+  if (filter === "all") {
+    return true;
+  }
+
+  if (filter === "short") {
+    return estimatedTimeMinutes <= 45;
+  }
+
+  if (filter === "medium") {
+    return estimatedTimeMinutes > 45 && estimatedTimeMinutes <= 60;
+  }
+
+  return estimatedTimeMinutes > 60;
+}
+
+function getInitialQueryState() {
+  if (typeof window === "undefined") {
+    return {
+      challengeId: challenges[0]?.id ?? "",
+      searchQuery: "",
+      selectedArchetype: "all" as string,
+      selectedDifficulty: "all" as DifficultyFilter,
+      selectedTime: "all" as TimeFilter,
+      trainingSupportOnly: false,
+    };
+  }
+
+  const params = new URLSearchParams(window.location.search);
+
+  return {
+    challengeId: params.get("challenge") ?? challenges[0]?.id ?? "",
+    searchQuery: params.get("q") ?? "",
+    selectedArchetype: params.get("archetype") ?? "all",
+    selectedDifficulty: (params.get("difficulty") as DifficultyFilter | null) ?? "all",
+    selectedTime: (params.get("time") as TimeFilter | null) ?? "all",
+    trainingSupportOnly: params.get("trainingSupport") === "1",
+  };
 }
 
 function getTrainingPrompts(challenge: LoadedChallenge) {
@@ -265,9 +323,15 @@ function normalizeTrainingComparisonReflection(
 }
 
 export default function App() {
+  const initialQueryState = getInitialQueryState();
   const [appMode, setAppMode] = useState<AppMode>("evaluation");
-  const [selectedId, setSelectedId] = useState<string>(challenges[0]?.id ?? "");
-  const selected = challenges.find((challenge) => challenge.id === selectedId) as LoadedChallenge;
+  const [selectedId, setSelectedId] = useState<string>(initialQueryState.challengeId);
+  const [searchQuery, setSearchQuery] = useState(initialQueryState.searchQuery);
+  const [selectedArchetype, setSelectedArchetype] = useState(initialQueryState.selectedArchetype);
+  const [selectedDifficulty, setSelectedDifficulty] =
+    useState<DifficultyFilter>(initialQueryState.selectedDifficulty);
+  const [selectedTime, setSelectedTime] = useState<TimeFilter>(initialQueryState.selectedTime);
+  const [trainingSupportOnly, setTrainingSupportOnly] = useState(initialQueryState.trainingSupportOnly);
   const [notes, setNotes] = useState("");
   const [response, setResponse] = useState("");
   const [reviewerMode, setReviewerMode] = useState(false);
@@ -289,6 +353,45 @@ export default function App() {
     message: string;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const searchableQuery = searchQuery.trim().toLowerCase();
+  const filteredChallenges = challenges.filter((challenge) => {
+    const matchesSearch =
+      searchableQuery.length === 0 ||
+      [
+        challenge.title,
+        challenge.archetype,
+        challenge.category,
+        challenge.description,
+        challenge.context,
+        ...(challenge.tags ?? []),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(searchableQuery);
+
+    const matchesArchetype =
+      selectedArchetype === "all" || challenge.archetype === selectedArchetype;
+    const matchesDifficulty =
+      selectedDifficulty === "all" || challenge.difficulty === selectedDifficulty;
+    const matchesTrainingSupport =
+      !trainingSupportOnly || hasAuthoredTrainingSupport(challenge);
+
+    return (
+      matchesSearch &&
+      matchesArchetype &&
+      matchesDifficulty &&
+      matchesTimeFilter(challenge.estimated_time_minutes, selectedTime) &&
+      matchesTrainingSupport
+    );
+  });
+  const selected = (
+    filteredChallenges.find((challenge) => challenge.id === selectedId) ??
+    challenges.find((challenge) => challenge.id === selectedId) ??
+    filteredChallenges[0] ??
+    challenges[0] ??
+    null
+  ) as LoadedChallenge;
+  const archetypeOptions = Array.from(new Set(challenges.map((challenge) => challenge.archetype)));
 
   const checklistItems = [
     ...selected.evaluation_signals.map((signal) => ({
@@ -460,6 +563,60 @@ export default function App() {
       );
     }
   }, [reviewerChecklist, selected]);
+
+  useEffect(() => {
+    if (filteredChallenges.length === 0) {
+      return;
+    }
+
+    if (!filteredChallenges.some((challenge) => challenge.id === selectedId)) {
+      setSelectedId(filteredChallenges[0].id);
+    }
+  }, [filteredChallenges, selectedId]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (selectedId) {
+      params.set("challenge", selectedId);
+    } else {
+      params.delete("challenge");
+    }
+
+    if (searchQuery.trim()) {
+      params.set("q", searchQuery.trim());
+    } else {
+      params.delete("q");
+    }
+
+    if (selectedArchetype !== "all") {
+      params.set("archetype", selectedArchetype);
+    } else {
+      params.delete("archetype");
+    }
+
+    if (selectedDifficulty !== "all") {
+      params.set("difficulty", selectedDifficulty);
+    } else {
+      params.delete("difficulty");
+    }
+
+    if (selectedTime !== "all") {
+      params.set("time", selectedTime);
+    } else {
+      params.delete("time");
+    }
+
+    if (trainingSupportOnly) {
+      params.set("trainingSupport", "1");
+    } else {
+      params.delete("trainingSupport");
+    }
+
+    const nextQuery = params.toString();
+    const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ""}${window.location.hash}`;
+    window.history.replaceState(null, "", nextUrl);
+  }, [searchQuery, selectedArchetype, selectedDifficulty, selectedId, selectedTime, trainingSupportOnly]);
 
   function exportWorkspace() {
     if (!selected) {
@@ -636,7 +793,11 @@ export default function App() {
           <p className="sidebar-copy">Local-first reference UI for AI-era engineering scenarios.</p>
         </div>
 
-        <div className="challenge-count">{challenges.length} seed challenges</div>
+        <div className="challenge-count">
+          {filteredChallenges.length === challenges.length
+            ? `${challenges.length} seed challenges`
+            : `${filteredChallenges.length} of ${challenges.length} challenges shown`}
+        </div>
 
         <div className="toolbar">
           <div className="mode-switch" role="tablist" aria-label="Workspace mode">
@@ -682,8 +843,89 @@ export default function App() {
           />
         </div>
 
+        <section className="filter-panel" aria-label="Challenge filters">
+          <div className="filter-header">
+            <strong>Find Challenges</strong>
+            <button
+              type="button"
+              className="filter-reset"
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedArchetype("all");
+                setSelectedDifficulty("all");
+                setSelectedTime("all");
+                setTrainingSupportOnly(false);
+              }}
+            >
+              Reset
+            </button>
+          </div>
+          <label className="filter-field">
+            <span>Search</span>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Title, tags, category, description"
+            />
+          </label>
+          <div className="filter-grid">
+            <label className="filter-field">
+              <span>Archetype</span>
+              <select
+                value={selectedArchetype}
+                onChange={(event) => setSelectedArchetype(event.target.value)}
+              >
+                <option value="all">All archetypes</option>
+                {archetypeOptions.map((archetype) => (
+                  <option key={archetype} value={archetype}>
+                    {formatLabel(archetype)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="filter-field">
+              <span>Difficulty</span>
+              <select
+                value={selectedDifficulty}
+                onChange={(event) => setSelectedDifficulty(event.target.value as DifficultyFilter)}
+              >
+                <option value="all">All levels</option>
+                <option value="intro">Intro</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </label>
+            <label className="filter-field">
+              <span>Estimated time</span>
+              <select
+                value={selectedTime}
+                onChange={(event) => setSelectedTime(event.target.value as TimeFilter)}
+              >
+                <option value="all">Any length</option>
+                <option value="short">45 min or less</option>
+                <option value="medium">46-60 min</option>
+                <option value="long">More than 60 min</option>
+              </select>
+            </label>
+          </div>
+          <label className="filter-checkbox">
+            <input
+              type="checkbox"
+              checked={trainingSupportOnly}
+              onChange={(event) => setTrainingSupportOnly(event.target.checked)}
+            />
+            <span>Show only challenges with authored training supports</span>
+          </label>
+        </section>
+
         <nav className="challenge-list" aria-label="Challenges">
-          {challenges.map((challenge) => (
+          {filteredChallenges.length === 0 && (
+            <div className="challenge-list-empty">
+              No challenges match the current search and filters.
+            </div>
+          )}
+          {filteredChallenges.map((challenge) => (
             <button
               key={challenge.id}
               type="button"

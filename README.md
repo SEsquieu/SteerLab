@@ -202,6 +202,7 @@ The challenge library should remain shared as long as possible. The project shou
 The repository includes a minimal React + Vite + TypeScript runner. It currently:
 
 - lists available challenges with archetype, difficulty, and estimated time
+- supports challenge search and filtering by archetype, difficulty, time, and authored training supports
 - supports both Evaluation Mode and Training Mode
 - renders challenge context, instructions, and supplied artifacts
 - stores local notes and responses in the browser

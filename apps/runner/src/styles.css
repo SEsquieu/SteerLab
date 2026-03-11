@@ -22,7 +22,9 @@ body {
 }
 
 button,
-textarea {
+textarea,
+input,
+select {
   font: inherit;
 }
 
@@ -88,6 +90,68 @@ button {
   margin: 0 0 16px;
 }
 
+.filter-panel {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 14px;
+  border: 1px solid rgba(231, 236, 239, 0.08);
+  border-radius: 16px;
+  background: rgba(18, 27, 33, 0.9);
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.filter-header strong {
+  font-size: 0.95rem;
+}
+
+.filter-reset {
+  border: 0;
+  background: transparent;
+  color: #d2a85c;
+  cursor: pointer;
+  padding: 0;
+}
+
+.filter-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.filter-field {
+  display: grid;
+  gap: 6px;
+}
+
+.filter-field span,
+.filter-checkbox span {
+  color: #9aabb4;
+  font-size: 0.83rem;
+}
+
+.filter-field input,
+.filter-field select {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(231, 236, 239, 0.12);
+  padding: 10px 12px;
+  background: #0f171c;
+  color: #e7ecef;
+}
+
+.filter-checkbox {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
 .mode-switch {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -143,6 +207,14 @@ button {
 .challenge-list {
   display: grid;
   gap: 10px;
+}
+
+.challenge-list-empty {
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px dashed rgba(231, 236, 239, 0.12);
+  color: #9aabb4;
+  background: rgba(18, 27, 33, 0.72);
 }
 
 .challenge-link {
@@ -537,6 +609,10 @@ textarea::placeholder {
   }
 
   .reflection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
