@@ -26,6 +26,10 @@ textarea {
   font: inherit;
 }
 
+input {
+  accent-color: #d2a85c;
+}
+
 button {
   transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
 }
@@ -239,6 +243,66 @@ button {
 .workspace-grid {
   display: grid;
   gap: 16px;
+}
+
+.review-outcome-group {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.review-outcome-label {
+  color: #95a4ab;
+  font-size: 0.92rem;
+}
+
+.outcome-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.outcome-chip {
+  border-radius: 999px;
+  border: 1px solid rgba(231, 236, 239, 0.1);
+  background: #121b21;
+  color: #dfe7eb;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.outcome-chip.active {
+  border-color: #d2a85c;
+  background: rgba(210, 168, 92, 0.14);
+}
+
+.checklist-groups {
+  display: grid;
+  gap: 16px;
+}
+
+.checklist-group {
+  border: 1px solid rgba(231, 236, 239, 0.08);
+  border-radius: 14px;
+  padding: 14px;
+  background: #121b21;
+}
+
+.checklist-group h4 {
+  margin-bottom: 12px;
+}
+
+.checklist-items {
+  display: grid;
+  gap: 10px;
+}
+
+.checklist-item {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 10px;
+  align-items: start;
+  color: #d9e1e5;
 }
 
 .artifact-card {

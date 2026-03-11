@@ -4,7 +4,13 @@ import type { LoadedChallenge } from "./types";
 
 const storageKey = (
   challengeId: string,
-  field: "notes" | "response" | "reviewerAssessment" | "reviewerNotes",
+  field:
+    | "notes"
+    | "response"
+    | "reviewerAssessment"
+    | "reviewerNotes"
+    | "reviewerOutcome"
+    | "reviewerChecklist",
 ) =>
   `steerlab:${challengeId}:${field}`;
 
@@ -18,13 +24,33 @@ export default function App() {
   const [notes, setNotes] = useState("");
   const [response, setResponse] = useState("");
   const [reviewerMode, setReviewerMode] = useState(false);
+  const [reviewerOutcome, setReviewerOutcome] = useState("");
   const [reviewerAssessment, setReviewerAssessment] = useState("");
   const [reviewerNotes, setReviewerNotes] = useState("");
+  const [reviewerChecklist, setReviewerChecklist] = useState<Record<string, boolean>>({});
   const [workspaceStatus, setWorkspaceStatus] = useState<{
     tone: "success" | "error";
     message: string;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const checklistItems = [
+    ...selected.evaluation_signals.map((signal) => ({
+      id: `signal:${signal}`,
+      label: signal,
+      group: "Evaluation signals",
+    })),
+    ...(selected.rubric?.strong ?? []).map((item) => ({
+      id: `strong:${item}`,
+      label: item,
+      group: "Strong rubric cues",
+    })),
+    ...(selected.rubric?.weak ?? []).map((item) => ({
+      id: `weak:${item}`,
+      label: `Watch for: ${item}`,
+      group: "Weak rubric cues",
+    })),
+  ];
 
   useEffect(() => {
     if (!selected) {
@@ -33,10 +59,18 @@ export default function App() {
 
     setNotes(window.localStorage.getItem(storageKey(selected.id, "notes")) ?? "");
     setResponse(window.localStorage.getItem(storageKey(selected.id, "response")) ?? "");
+    setReviewerOutcome(window.localStorage.getItem(storageKey(selected.id, "reviewerOutcome")) ?? "");
     setReviewerAssessment(
       window.localStorage.getItem(storageKey(selected.id, "reviewerAssessment")) ?? "",
     );
     setReviewerNotes(window.localStorage.getItem(storageKey(selected.id, "reviewerNotes")) ?? "");
+    try {
+      const savedChecklist = window.localStorage.getItem(storageKey(selected.id, "reviewerChecklist"));
+      const parsed = savedChecklist ? (JSON.parse(savedChecklist) as Record<string, boolean>) : {};
+      setReviewerChecklist(parsed && typeof parsed === "object" ? parsed : {});
+    } catch {
+      setReviewerChecklist({});
+    }
   }, [selected]);
 
   useEffect(() => {
@@ -53,6 +87,12 @@ export default function App() {
 
   useEffect(() => {
     if (selected) {
+      window.localStorage.setItem(storageKey(selected.id, "reviewerOutcome"), reviewerOutcome);
+    }
+  }, [reviewerOutcome, selected]);
+
+  useEffect(() => {
+    if (selected) {
       window.localStorage.setItem(storageKey(selected.id, "reviewerAssessment"), reviewerAssessment);
     }
   }, [reviewerAssessment, selected]);
@@ -62,6 +102,15 @@ export default function App() {
       window.localStorage.setItem(storageKey(selected.id, "reviewerNotes"), reviewerNotes);
     }
   }, [reviewerNotes, selected]);
+
+  useEffect(() => {
+    if (selected) {
+      window.localStorage.setItem(
+        storageKey(selected.id, "reviewerChecklist"),
+        JSON.stringify(reviewerChecklist),
+      );
+    }
+  }, [reviewerChecklist, selected]);
 
   function exportWorkspace() {
     if (!selected) {
@@ -74,8 +123,10 @@ export default function App() {
       exportedAt,
       notes,
       response,
+      reviewerOutcome,
       reviewerAssessment,
       reviewerNotes,
+      reviewerChecklist,
     };
 
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
@@ -107,8 +158,10 @@ export default function App() {
         exportedAt?: string;
         notes?: string;
         response?: string;
+        reviewerOutcome?: string;
         reviewerAssessment?: string;
         reviewerNotes?: string;
+        reviewerChecklist?: Record<string, boolean>;
       };
     } catch {
       setWorkspaceStatus({
@@ -148,10 +201,20 @@ export default function App() {
 
     setNotes(typeof payload.notes === "string" ? payload.notes : "");
     setResponse(typeof payload.response === "string" ? payload.response : "");
+    setReviewerOutcome(typeof payload.reviewerOutcome === "string" ? payload.reviewerOutcome : "");
     setReviewerAssessment(
       typeof payload.reviewerAssessment === "string" ? payload.reviewerAssessment : "",
     );
     setReviewerNotes(typeof payload.reviewerNotes === "string" ? payload.reviewerNotes : "");
+    setReviewerChecklist(
+      payload.reviewerChecklist &&
+        typeof payload.reviewerChecklist === "object" &&
+        !Array.isArray(payload.reviewerChecklist)
+        ? Object.fromEntries(
+            Object.entries(payload.reviewerChecklist).map(([key, value]) => [key, Boolean(value)]),
+          )
+        : {},
+    );
     setWorkspaceStatus({
       tone: "success",
       message: `Imported workspace from ${payload.exportedAt}.`,
@@ -162,6 +225,15 @@ export default function App() {
   if (!selected) {
     return <main className="empty-state">No challenges found.</main>;
   }
+
+  const checklistGroups = Array.from(
+    checklistItems.reduce((groups, item) => {
+      const existing = groups.get(item.group) ?? [];
+      existing.push(item);
+      groups.set(item.group, existing);
+      return groups;
+    }, new Map<string, typeof checklistItems>()),
+  );
 
   return (
     <div className="app-shell">
@@ -331,7 +403,54 @@ export default function App() {
         </section>
 
         {reviewerMode && (
-          <section className="workspace-grid">
+          <>
+            <section className="panel">
+              <div className="section-heading">
+                <h3>Reviewer Checklist</h3>
+                <span className="source-path">Structured cues derived from this challenge</span>
+              </div>
+              <div className="review-outcome-group">
+                <span className="review-outcome-label">Quick outcome</span>
+                <div className="outcome-options">
+                  {["Strong", "Mixed", "Weak"].map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      className={reviewerOutcome === option ? "outcome-chip active" : "outcome-chip"}
+                      onClick={() => setReviewerOutcome(option)}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="checklist-groups">
+                {checklistGroups.map(([group, items]) => (
+                  <section key={group} className="checklist-group">
+                    <h4>{group}</h4>
+                    <div className="checklist-items">
+                      {items.map((item) => (
+                        <label key={item.id} className="checklist-item">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(reviewerChecklist[item.id])}
+                            onChange={(event) =>
+                              setReviewerChecklist((current) => ({
+                                ...current,
+                                [item.id]: event.target.checked,
+                              }))
+                            }
+                          />
+                          <span>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            </section>
+
+            <section className="workspace-grid">
             <section className="panel">
               <h3>Reviewer Assessment</h3>
               <textarea
@@ -348,7 +467,8 @@ export default function App() {
                 placeholder="Capture evidence-based review notes tied to the evaluation signals."
               />
             </section>
-          </section>
+            </section>
+          </>
         )}
       </main>
     </div>
