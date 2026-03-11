@@ -1,0 +1,70 @@
+id: tool-steering-challenge-csv-import-guardrails
+title: Use AI to add guardrails to a small CSV import flow
+archetype: tool-steering-challenge
+category: backend-maintenance
+description: Show how you would steer AI help on a small but risky validation task.
+difficulty: intro
+estimated_time_minutes: 30
+tags:
+  - ai-collaboration
+  - validation
+  - maintenance
+context: |
+  A small internal tool imports customer contacts from CSV files. The current importer works for happy-path data
+  but has caused support cleanup when rows are malformed or key fields are missing.
+  You are allowed to use AI tooling, but the task is intentionally small: add guardrails without turning this into
+  a broad rewrite. The point is how you scope the work, constrain the model, and verify the result.
+supplied_artifacts:
+  - path: artifacts/task-context.md
+    kind: markdown
+    purpose: Task scope, constraints, and acceptance criteria
+  - path: artifacts/importer.ts
+    kind: code
+    purpose: Simplified importer implementation that needs safer validation
+candidate_instructions:
+  - Describe the smallest safe slice you would ask AI to help with.
+  - Show what instructions or constraints you would give the model.
+  - Explain how you would verify the output before accepting it.
+  - Note what parts of the change should remain under direct human judgment.
+evaluation_signals:
+  - Keeps the AI-assisted scope narrow and concrete.
+  - Defines verification steps before trusting generated code.
+  - Recognizes that validation behavior and error handling need direct human review.
+  - Avoids turning a small maintenance task into a broad refactor.
+rubric:
+  strong:
+    - Gives the model bounded instructions tied to explicit acceptance criteria.
+    - Uses tests, diff review, and sample inputs to verify the result.
+    - Keeps ownership of behavior and edge-case decisions with the engineer.
+  weak:
+    - Asks the model to "improve the importer" without scope control.
+    - Treats generated validation logic as trustworthy by default.
+training_support:
+  reflection_prompts:
+    - What is the smallest useful change that would reduce support cleanup?
+    - What exact acceptance criteria should be defined before asking the model for code?
+    - How will you test that the generated change handles bad rows without widening scope?
+  thinking_checklist:
+    - Narrow the task before generating code
+    - State acceptance criteria before trusting output
+    - Verify behavior with concrete examples, not just a quick skim
+  checkpoints:
+    - id: slice
+      title: Choose the smallest safe slice
+      prompt: What exact importer behavior would you target first so the AI change stays narrow and reviewable?
+    - id: instructions
+      title: Constrain the model
+      prompt: What instructions, boundaries, and non-goals would you give the model before it edits code?
+    - id: verification
+      title: Verify the result
+      prompt: What sample inputs, tests, or manual checks would you run before you trust the generated patch?
+  hints:
+    - title: Keep the diff small
+      content: A better first prompt is often about adding one validation path, not redesigning the importer.
+    - title: Define bad inputs explicitly
+      content: Tell the model what malformed rows should do instead of asking for generic "better validation."
+    - title: Verify with examples
+      content: A few concrete CSV rows can test generated code more reliably than a vague review.
+  worked_examples:
+    - label: Tool Steering example review
+      href: /docs/example-review-tool-steering.md

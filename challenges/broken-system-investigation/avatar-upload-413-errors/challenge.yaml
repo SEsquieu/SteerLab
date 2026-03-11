@@ -1,0 +1,73 @@
+id: broken-system-investigation-avatar-upload-413-errors
+title: Diagnose avatar uploads failing with 413 errors
+archetype: broken-system-investigation
+category: web-infrastructure
+description: Investigate why profile photo uploads started failing after a small infrastructure change.
+difficulty: intro
+estimated_time_minutes: 25
+tags:
+  - incident-analysis
+  - reverse-proxy
+  - uploads
+context: |
+  A SaaS app lets users upload small profile photos from the account settings page.
+  Support reports that uploads worked yesterday but now fail for many users with a generic "upload failed" toast.
+  The app team says they only shipped a small proxy cleanup to standardize Nginx settings across services.
+  You have the relevant proxy config, a short application log excerpt, and the release note from the change.
+supplied_artifacts:
+  - path: artifacts/nginx.conf
+    kind: config
+    purpose: Current reverse-proxy settings for the account service
+  - path: artifacts/upload.log
+    kind: log
+    purpose: Application log excerpt during failed upload attempts
+  - path: artifacts/release-note.md
+    kind: markdown
+    purpose: Summary of the recent infrastructure cleanup
+candidate_instructions:
+  - Identify the most likely root cause.
+  - Explain how the supplied artifacts support your conclusion.
+  - Propose one immediate mitigation and one durable follow-up.
+  - Note any small checks you would run before closing the incident.
+evaluation_signals:
+  - Connects the failures to infrastructure request-size handling instead of the application code.
+  - Uses both config and logs rather than relying on generic debugging advice.
+  - Distinguishes immediate rollback or config mitigation from longer-term prevention.
+  - Avoids overstating certainty beyond the supplied evidence.
+rubric:
+  strong:
+    - Recognizes the 413 status as a proxy-layer request size limit problem.
+    - Connects the release note to the specific Nginx setting change.
+    - Suggests practical validation such as retrying with known file sizes after mitigation.
+  weak:
+    - Focuses only on frontend bugs or image-processing code.
+    - Ignores the proxy config and release-note clues.
+training_support:
+  reflection_prompts:
+    - Which artifact gives you the strongest clue about where the failure is happening?
+    - What facts point to proxy behavior rather than application logic?
+    - What is the fastest safe mitigation before any larger cleanup?
+  thinking_checklist:
+    - Start by locating where the request is being rejected
+    - Use config and logs together instead of guessing from symptoms
+    - Separate immediate restoration from longer-term hardening
+  checkpoints:
+    - id: location
+      title: Locate the failure boundary
+      prompt: Is the upload being rejected by the browser, the app, or infrastructure in front of the app, and what evidence supports that?
+    - id: mechanism
+      title: Name the failure mechanism
+      prompt: What specific config behavior best explains why uploads started failing right after the proxy cleanup?
+    - id: response
+      title: Restore service safely
+      prompt: What would you change immediately, and what small checks would confirm the fix before you close the incident?
+  hints:
+    - title: Follow the status code
+      content: A 413 error usually tells you something about request handling before business logic runs.
+    - title: Compare the release note to the config
+      content: The problem likely comes from a standardized proxy setting, not a new application feature.
+    - title: Mitigate first
+      content: A simple rollback or config adjustment is likely safer than deeper redesign during the incident.
+  worked_examples:
+    - label: Broken System example review
+      href: /docs/example-review.md

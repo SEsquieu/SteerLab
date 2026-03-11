@@ -1,0 +1,71 @@
+id: architecture-thought-experiment-admin-settings-audit-log
+title: Add a basic audit log for admin settings changes
+archetype: architecture-thought-experiment
+category: admin-tooling
+description: Design a first version of audit logging for sensitive admin configuration changes.
+difficulty: intro
+estimated_time_minutes: 30
+tags:
+  - design
+  - auditability
+  - internal-tools
+context: |
+  An internal admin panel lets support and operations staff change tenant-level settings such as billing contacts,
+  feature access, and account status flags. Today the system stores only the latest value.
+  Leadership wants a basic audit trail after a recent incident where nobody could tell who changed a tenant setting.
+  The team does not want a large event platform project. They want a practical first version that is safe, searchable,
+  and easy for the current team to maintain.
+supplied_artifacts:
+  - path: artifacts/system-overview.md
+    kind: markdown
+    purpose: Current admin-panel flow and operational constraints
+  - path: artifacts/settings-api.md
+    kind: markdown
+    purpose: Simplified write path for settings changes
+candidate_instructions:
+  - Propose a practical first-version design.
+  - Explain where audit records should be written and what they should contain.
+  - Describe access, retention, and rollout considerations.
+  - Call out what you would intentionally defer.
+evaluation_signals:
+  - Matches the design to the stated need instead of overbuilding the solution.
+  - Identifies the right write-path boundary for durable audit records.
+  - Includes useful audit fields such as actor, tenant, before/after values, and timestamp.
+  - Separates first-version needs from later extensions.
+rubric:
+  strong:
+    - Proposes a simple durable audit store tied to the settings write path.
+    - Notes both operational usefulness and access-control concerns.
+    - Defers broader event-platform ideas unless there is a clear reason to add them.
+  weak:
+    - Treats the request as a generic analytics pipeline problem.
+    - Omits what data makes an audit record useful in practice.
+training_support:
+  reflection_prompts:
+    - What is the smallest design that would still answer "who changed what, and when?"
+    - Where should the audit record be written so it stays aligned with the actual settings change?
+    - What should be intentionally deferred from a first version?
+  thinking_checklist:
+    - Start from the user need, not a platform wishlist
+    - Define the write-path boundary for the audit record
+    - Distinguish first-version scope from later improvements
+  checkpoints:
+    - id: scope
+      title: Define the first-version goal
+      prompt: What exact questions should this first version be able to answer for operators and reviewers?
+    - id: write-path
+      title: Place the audit record correctly
+      prompt: At what point in the settings-change flow should the audit record be created, and why there?
+    - id: defer
+      title: Defer with intent
+      prompt: What useful but non-essential additions should wait until after the first version is working?
+  hints:
+    - title: Start with accountability, not analytics
+      content: The immediate goal is to make admin changes attributable and reviewable, not to build a general event system.
+    - title: Stay close to the write path
+      content: Audit logging is most reliable when it is created alongside the settings update, not as a best-effort afterthought.
+    - title: Keep v1 small
+      content: Searchable history with the right fields is more valuable right now than a large streaming architecture.
+  worked_examples:
+    - label: Architecture example review
+      href: /docs/example-review-architecture.md

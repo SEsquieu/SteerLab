@@ -247,9 +247,9 @@ Read the core docs:
 
 The current seed library includes:
 
-- 2 Broken System Investigation challenges
-- 2 Architecture Thought Experiment challenges
-- 2 Tool Steering Challenge scenarios
+- 3 Broken System Investigation challenges
+- 3 Architecture Thought Experiment challenges
+- 3 Tool Steering Challenge scenarios
 
 For new challenge authoring:
 
