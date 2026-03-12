@@ -4,6 +4,8 @@ This document describes how LLM integration should fit into SteerLab.
 
 The goal is not to turn SteerLab into an AI wrapper or a model-specific product. The goal is to let models participate in bounded roles while SteerLab remains responsible for structure, pedagogy, and evaluation logic.
 
+For generation-pipeline boundaries and specialty extensibility, see [`docs/generation-pipeline.md`](./generation-pipeline.md).
+
 ## Core Principle
 
 SteerLab owns:

@@ -61,6 +61,7 @@ Status: architecture defined, implementation largely open.
 - define a model-agnostic provider abstraction
 - separate scenario generation, coaching, and candidate tool interaction as distinct roles
 - support optional scenario generation for Training Mode
+- define the generation-request, specialty-pack, validation, and promotion boundaries for future challenge generation
 - support optional coaching for Training Mode under explicit pedagogical constraints
 - define authentic candidate-model trace capture for Evaluation Mode
 - study privacy, consent, and misuse risks around trace capture
