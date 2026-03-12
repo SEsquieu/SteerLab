@@ -1334,9 +1334,9 @@ export default function App() {
           </ul>
         </section>
 
-        {appMode === "evaluation" && selected.rubric && (
+        {appMode === "evaluation" && reviewerMode && selected.rubric && (
           <section className="panel">
-            <h3>Rubric</h3>
+            <h3>Reviewer Rubric</h3>
             {selected.rubric.strong && (
               <>
                 <h4>Strong signals</h4>
