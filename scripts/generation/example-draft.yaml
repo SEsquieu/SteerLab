@@ -1,0 +1,98 @@
+request:
+  archetype: broken-system-investigation
+  specialty: devops
+  difficulty: intro
+  intended_mode: training
+  estimated_time_minutes: 30
+  artifact_profile:
+    preferred_kinds:
+      - log
+      - config
+      - markdown
+    required_kinds:
+      - log
+    max_artifacts: 3
+  realism_constraints:
+    - Keep the system plausible for a small product engineering team.
+    - Avoid toy infrastructure incidents.
+  topic_tags:
+    - deployment
+    - rollback
+  freshness_policy: daily-practice
+  training_support_depth: standard
+  source_request: Give me a 30-minute devops debugging challenge.
+draft_package:
+  challenge_id: broken-system-investigation-devops-rollout-regression
+  request_ref: requests/example-devops-intro.yaml
+  specialty_pack_ref: specialties/devops/pack.yaml
+  generated_at: "2026-03-12T16:00:00Z"
+  challenge_definition:
+    id: broken-system-investigation-devops-rollout-regression
+    title: Diagnose a rollout regression after a partial canary deploy
+    archetype: broken-system-investigation
+    category: deployment
+    description: Investigate why error rate rose after a canary rollout that initially looked healthy.
+    context: |
+      A service was rolled out to 10% of traffic.
+      The deploy was not immediately rolled back because early health checks looked normal.
+      Ten minutes later, error rate rose and saturation increased on one dependency.
+    supplied_artifacts:
+      - path: artifacts/deploy.log
+        kind: log
+        purpose: Deployment and application log excerpt
+      - path: artifacts/config.yaml
+        kind: yaml
+        purpose: Relevant service configuration excerpt
+    candidate_instructions:
+      - Identify the most likely failure mechanism.
+      - Explain how the supplied evidence supports your conclusion.
+      - Propose one immediate mitigation and one longer-term fix.
+    evaluation_signals:
+      - Connects the regression to rollout or configuration behavior rather than generic scaling advice.
+      - Distinguishes mitigation from durable prevention.
+    difficulty: intro
+    estimated_time_minutes: 30
+    training_support:
+      reflection_prompts:
+        - What are the concrete facts before you decide on a root cause?
+      thinking_checklist:
+        - Separate observed symptoms from inferred mechanisms
+      checkpoints:
+        - id: facts
+          title: Inventory the observed facts
+          prompt: What in the logs and config is definitely true before you infer causality?
+      hints:
+        - title: Start with the rollout boundary
+          content: Ask what changed between the canary and the baseline path.
+  artifacts:
+    - path: artifacts/deploy.log
+      kind: log
+      purpose: Deployment and application log excerpt
+      content: |
+        2026-03-12T15:02:11Z deploy canary=10%
+        2026-03-12T15:11:44Z errors p95=1.2%
+    - path: artifacts/config.yaml
+      kind: yaml
+      purpose: Relevant service configuration excerpt
+      content: |
+        feature_flags:
+          new_dependency_pool: true
+validation_report:
+  challenge_id: broken-system-investigation-devops-rollout-regression
+  structural_status: pass
+  semantic_status: warn
+  issues:
+    - stage: semantic
+      severity: warning
+      code: shallow-signals
+      message: Evaluation signals could reference the supplied config more directly.
+      field: evaluation_signals
+      suggested_action: Tie one signal to rollout/config boundary reasoning.
+  overall_recommendation: repair
+promotion_record:
+  challenge_id: broken-system-investigation-devops-rollout-regression
+  source_mode: training
+  destination: draft-library
+  decision: needs-repair
+  basis: automatic
+  validation_report_ref: validation-report.yaml

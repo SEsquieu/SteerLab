@@ -7,6 +7,7 @@
     "dev": "npm --prefix apps/runner run dev",
     "build": "npm --prefix apps/runner run build",
     "preview": "npm --prefix apps/runner run preview",
-    "validate:challenges": "node scripts/validate-challenges.mjs"
+    "validate:challenges": "node scripts/validate-challenges.mjs",
+    "generate:scaffold-draft": "node scripts/generation/scaffold-draft.mjs"
   }
 }
