@@ -193,6 +193,7 @@ The challenge library should remain shared as long as possible. The project shou
 |   |-- architecture-thought-experiment/
 |   |-- broken-system-investigation/
 |   `-- tool-steering-challenge/
+|-- specialties/
 `-- apps/
     `-- runner/
 ```
@@ -242,6 +243,8 @@ Read the core docs:
 - [`docs/example-review-architecture.md`](./docs/example-review-architecture.md)
 - [`docs/example-review-tool-steering.md`](./docs/example-review-tool-steering.md)
 - [`docs/generation-pipeline.md`](./docs/generation-pipeline.md)
+- [`docs/generation-spec.md`](./docs/generation-spec.md)
+- [`docs/specialty-packs.md`](./docs/specialty-packs.md)
 - [`docs/llm-integration.md`](./docs/llm-integration.md)
 - [`docs/reviewer-guide.md`](./docs/reviewer-guide.md)
 - [`docs/training-mode.md`](./docs/training-mode.md)
@@ -281,6 +284,8 @@ Start here:
 - [`docs/example-review-architecture.md`](./docs/example-review-architecture.md)
 - [`docs/example-review-tool-steering.md`](./docs/example-review-tool-steering.md)
 - [`docs/generation-pipeline.md`](./docs/generation-pipeline.md)
+- [`docs/generation-spec.md`](./docs/generation-spec.md)
+- [`docs/specialty-packs.md`](./docs/specialty-packs.md)
 - [`docs/llm-integration.md`](./docs/llm-integration.md)
 - [`docs/reviewer-guide.md`](./docs/reviewer-guide.md)
 - [`docs/training-mode.md`](./docs/training-mode.md)

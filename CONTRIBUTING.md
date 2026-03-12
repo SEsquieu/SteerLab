@@ -20,6 +20,11 @@ The project also distinguishes between:
 - Evaluation Mode work
 - Training Mode work
 
+It is also beginning to distinguish between:
+
+- archetype expansion, which should stay rare
+- specialty-pack expansion, which should be the normal path for growing domain breadth
+
 When proposing changes, be explicit about which layer your contribution belongs to.
 
 ## Modes
@@ -50,6 +55,8 @@ Training Mode:
 The same challenge should stay usable across both modes whenever practical. Prefer extending shared challenge metadata over forking content into parallel challenge libraries too early.
 
 Add to the shared core if the change benefits both modes. Add to Evaluation Mode or Training Mode if the change is specific to one of those applications.
+
+If your proposal is about domain breadth for generation or future challenge design, prefer working through specialty packs rather than proposing new archetypes.
 
 ## Contribution Principles
 
@@ -123,6 +130,27 @@ High-value design contributions usually do one of these:
 - remove gimmicks or accidental ambiguity
 - make candidate instructions more concrete
 - improve reviewer guidance so interpretation is less arbitrary
+
+## Contributing Specialty Packs
+
+Specialty packs live under [`specialties/`](./specialties).
+
+They are the preferred mechanism for extending SteerLab into domains like frontend, devops, data-platform, cloud, payments, or embedded without inventing new archetypes casually.
+
+Before proposing a new pack:
+
+- read [`docs/generation-pipeline.md`](./docs/generation-pipeline.md)
+- read [`docs/generation-spec.md`](./docs/generation-spec.md)
+- read [`docs/specialty-packs.md`](./docs/specialty-packs.md)
+- start from [`specialties/_template/`](./specialties/_template)
+
+Good specialty-pack contributions should:
+
+- define realistic system patterns
+- clarify useful artifact shapes
+- document common failure modes or tradeoff axes
+- identify bad generated patterns to reject
+- strengthen realism rather than add domain buzzwords
 
 ## Suggesting New Signals or Rubrics
 

@@ -1,0 +1,62 @@
+id: devops
+version: "0.1"
+title: DevOps
+summary: Operational systems, delivery workflows, deployment safety, and infrastructure reliability.
+supported_archetypes:
+  - broken-system-investigation
+  - architecture-thought-experiment
+  - tool-steering-challenge
+system_patterns:
+  - Kubernetes-hosted services with managed databases and queued jobs
+  - CI/CD pipelines with staged rollout and rollback paths
+  - Infrastructure-as-code environments with config drift risk
+artifact_guidance:
+  preferred_kinds:
+    - log
+    - config
+    - markdown
+    - code
+  common_pairs:
+    - [log, config]
+    - [markdown, code]
+  discouraged_kinds:
+    - image
+  max_recommended_artifacts: 4
+realism_rules:
+  - Prefer incidents and tradeoffs that a product engineering team could actually face.
+  - Keep failures diagnosable from the supplied evidence.
+  - Avoid requiring niche vendor knowledge unless the challenge explicitly centers it.
+anti_patterns:
+  - Generic cloud advice without a concrete system.
+  - Vendor-name swapping that does not change the reasoning.
+  - Operational recommendations that are not tied to the supplied artifacts or constraints.
+vocabulary:
+  - rollback
+  - rollout
+  - runbook
+  - config drift
+  - backpressure
+  - saturation
+common_failure_modes:
+  - deploy rollback gaps
+  - retry amplification
+  - observability blind spots
+  - config drift
+  - queue backlog growth
+common_tradeoff_axes:
+  - deployment speed vs safety
+  - platform control vs team autonomy
+  - centralization vs local operability
+evaluation_heuristics:
+  - Strong responses usually connect symptoms to concrete operational boundaries instead of offering generic platform advice.
+  - Strong responses usually distinguish immediate mitigation from infrastructure redesign.
+training_heuristics:
+  - Prefer checkpoints that separate observed facts from remediation ideas.
+  - Prefer hints that reinforce system boundaries and validation discipline over tool fluency.
+tag_catalog:
+  - deployment
+  - observability
+  - rollback
+  - config
+  - incident-response
+  - infrastructure

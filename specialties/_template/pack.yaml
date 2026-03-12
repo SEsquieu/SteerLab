@@ -1,0 +1,32 @@
+id: replace-with-specialty-id
+version: "0.1"
+title: Replace With Specialty Name
+summary: One-sentence description of the engineering domain this pack covers.
+supported_archetypes:
+  - broken-system-investigation
+  - architecture-thought-experiment
+system_patterns:
+  - Replace with a realistic system pattern for this specialty
+artifact_guidance:
+  preferred_kinds:
+    - markdown
+    - log
+  common_pairs:
+    - [markdown, log]
+  max_recommended_artifacts: 4
+realism_rules:
+  - Replace with a realism constraint that keeps generated content grounded
+anti_patterns:
+  - Replace with a generated pattern this pack should reject
+vocabulary:
+  - Replace with important domain vocabulary
+common_failure_modes:
+  - Replace with a domain-specific failure mode if relevant
+common_tradeoff_axes:
+  - Replace with a tradeoff axis if relevant
+evaluation_heuristics:
+  - Replace with a reviewer-facing heuristic if useful
+training_heuristics:
+  - Replace with a training-support heuristic if useful
+tag_catalog:
+  - replace-with-topic-tag

@@ -2,6 +2,8 @@
 
 This document defines the edges of a future challenge-generation pipeline for SteerLab.
 
+For the first concrete internal object shapes, see [`docs/generation-spec.md`](./generation-spec.md).
+
 The goal is not to let models produce first-class content unchecked. The goal is to define a bounded pipeline that can generate useful draft challenges while preserving SteerLab's structure, quality bar, and future extensibility.
 
 ## Core Principle
