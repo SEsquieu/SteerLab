@@ -196,6 +196,8 @@ Promotion targets should stay distinct:
 
 The promotion bar should be highest for anything committed into the repo.
 
+This is where `PromotionRecord` becomes important: the system should record both the decision and the destination rather than treating promotion as an implied side effect of validation success.
+
 ## Daily Practice Path
 
 If SteerLab becomes a daily engineering practice aid, the generation pipeline should support a lighter-weight path for ephemeral use.
@@ -267,7 +269,7 @@ Captures structural errors, semantic warnings, and repair suggestions.
 
 Captures where the generated output is allowed to go next.
 
-These do not all need to become public schema immediately, but they are useful architectural boundaries.
+These do not all need to become public schema immediately, but they are useful architectural boundaries. See [`docs/generation-spec.md`](./generation-spec.md) for the current first-pass field definitions.
 
 ## Non-Goals
 

@@ -21,12 +21,14 @@ The model may draft content. SteerLab still owns the request shape, pack selecti
 
 ## Internal Objects
 
-The first-pass internal generation spec centers on two objects:
+The first-pass internal generation spec centers on four objects:
 
 - `GenerationRequest`
 - `SpecialtyPack`
+- `ValidationReport`
+- `PromotionRecord`
 
-Other pipeline objects such as `DraftChallengePackage`, `ValidationReport`, and `PromotionRecord` should follow later.
+`DraftChallengePackage` should still follow as a separate object, but these four boundaries are enough to stabilize the first implementation planning.
 
 ## `GenerationRequest`
 
@@ -492,6 +494,257 @@ The intended flow is:
 
 `SpecialtyPack` says how that specialty should stay realistic and useful.
 
+## `ValidationReport`
+
+`ValidationReport` is the structured output of structural validation, semantic validation, and any repair recommendations.
+
+It should be the main object reviewers, repair logic, and promotion logic inspect before deciding what happens next.
+
+### Purpose
+
+`ValidationReport` should answer:
+
+- did the draft pass structural validation
+- did the draft pass semantic validation
+- what issues were found
+- how severe those issues are
+- what repairs were suggested or attempted
+- whether the draft is promotable, repairable, or rejectable
+
+### Required Fields
+
+```ts
+type ValidationReport = {
+  challenge_id: string;
+  structural_status: "pass" | "fail";
+  semantic_status: "pass" | "warn" | "fail";
+  issues: ValidationIssue[];
+  overall_recommendation: "promote" | "repair" | "reject";
+};
+```
+
+### Supporting Types
+
+```ts
+type ValidationIssue = {
+  stage: "structural" | "semantic" | "repair";
+  severity: "info" | "warning" | "error";
+  code: string;
+  message: string;
+  field?: string;
+  suggested_action?: string;
+};
+```
+
+### Field Semantics
+
+#### `challenge_id`
+
+The draft challenge id under review.
+
+This is mainly for traceability between draft packages, reports, and promotion records.
+
+#### `structural_status`
+
+Result of schema-level and artifact-level validation.
+
+Values:
+
+- `pass`
+- `fail`
+
+If this fails, the draft should never be promoted directly.
+
+#### `semantic_status`
+
+Result of realism, archetype-fidelity, and challenge-quality validation.
+
+Values:
+
+- `pass`
+- `warn`
+- `fail`
+
+`warn` is useful for cases that are structurally sound and mostly plausible but need human judgment or bounded repair.
+
+#### `issues`
+
+Flat list of validation issues across all stages.
+
+Each issue should be explicit enough that:
+
+- a repair loop can act on it
+- a human reviewer can understand it
+- a future dashboard could summarize it
+
+#### `overall_recommendation`
+
+The pipeline’s best next-action recommendation.
+
+Values:
+
+- `promote`
+- `repair`
+- `reject`
+
+This should be derived from statuses and issue severity rather than set arbitrarily.
+
+### Optional Fields
+
+```ts
+type ValidationReportOptional = {
+  generated_at?: string;
+  repaired?: boolean;
+  repair_attempts?: number;
+  repair_summary?: string[];
+  reviewer_notes?: string[];
+};
+```
+
+### Example
+
+```yaml
+challenge_id: broken-system-investigation-devops-rollout-regression
+structural_status: pass
+semantic_status: warn
+issues:
+  - stage: semantic
+    severity: warning
+    code: generic-evaluation-signals
+    message: Evaluation signals are too generic and not tied tightly enough to the supplied artifacts.
+    field: evaluation_signals
+    suggested_action: Rewrite signals to reference rollback boundaries and observed deployment behavior.
+  - stage: semantic
+    severity: warning
+    code: hint-too-leading
+    message: Final hint gives away too much of the causal chain for Training Mode.
+    field: training_support.hints[2]
+    suggested_action: Rewrite the hint to reinforce evidence discipline instead of naming the answer.
+overall_recommendation: repair
+repair_attempts: 0
+```
+
+## `PromotionRecord`
+
+`PromotionRecord` captures what happened after validation and where a generated draft is allowed to go next.
+
+It should separate ephemeral practice generation from repository-level curation.
+
+### Purpose
+
+`PromotionRecord` should answer:
+
+- what promotion path was considered
+- what decision was made
+- who or what made that decision
+- what report the decision relied on
+- where the draft is allowed to go next
+
+### Required Fields
+
+```ts
+type PromotionRecord = {
+  challenge_id: string;
+  source_mode: "training" | "evaluation" | "draft-review";
+  destination: PromotionDestination;
+  decision: "approved" | "needs-repair" | "rejected";
+  basis: "automatic" | "human-review" | "hybrid";
+  validation_report_ref: string;
+};
+```
+
+### Supporting Types
+
+```ts
+type PromotionDestination =
+  | "scratch"
+  | "daily-practice-queue"
+  | "draft-library"
+  | "repo-candidate"
+  | "repo-curated";
+```
+
+### Field Semantics
+
+#### `challenge_id`
+
+The draft challenge being promoted or rejected.
+
+#### `source_mode`
+
+The mode context in which the draft was generated.
+
+This matters because a draft created for disposable daily practice should not automatically be treated like repository-quality content.
+
+#### `destination`
+
+Where the draft is allowed to go next.
+
+Values:
+
+- `scratch`
+- `daily-practice-queue`
+- `draft-library`
+- `repo-candidate`
+- `repo-curated`
+
+These destinations should reflect increasing promotion bar.
+
+#### `decision`
+
+The promotion decision itself.
+
+Values:
+
+- `approved`
+- `needs-repair`
+- `rejected`
+
+#### `basis`
+
+How the promotion decision was reached.
+
+Values:
+
+- `automatic`
+- `human-review`
+- `hybrid`
+
+Repository-bound promotion should usually involve `human-review` or `hybrid`, not pure automation.
+
+#### `validation_report_ref`
+
+Reference to the `ValidationReport` that justified the decision.
+
+This keeps promotion legible and auditable.
+
+### Optional Fields
+
+```ts
+type PromotionRecordOptional = {
+  decided_at?: string;
+  decided_by?: string;
+  notes?: string[];
+  next_actions?: string[];
+};
+```
+
+### Example
+
+```yaml
+challenge_id: broken-system-investigation-devops-rollout-regression
+source_mode: training
+destination: daily-practice-queue
+decision: approved
+basis: hybrid
+validation_report_ref: reports/broken-system-investigation-devops-rollout-regression.yaml
+decided_at: "2026-03-12T15:20:00Z"
+decided_by: local-review-pass
+notes:
+  - Structural validation passed.
+  - Semantic validation produced only repairable warnings and those warnings were resolved.
+```
+
 ## Open Questions
 
 These should stay open for now:
@@ -500,12 +753,13 @@ These should stay open for now:
 - Should `training_support_depth` live in `GenerationRequest`, or inside a separate generation profile object?
 - How much of semantic validation should be pack-defined versus shared globally?
 - Should `supported_archetypes` be permissive guidance or a hard allow-list?
+- How much of `ValidationReport` should be standardized versus left open for pack-specific issue codes?
+- Should `PromotionRecord.destination` be a fixed enum in v1, or allow local extension outside repository promotion?
 
 ## Immediate Next Step
 
 After this spec, the next sensible move is:
 
-1. define `ValidationReport`
-2. define `PromotionRecord`
-3. add the first example `SpecialtyPack` directory structure
-4. only then begin code-level generation scaffolding
+1. define `DraftChallengePackage`
+2. decide the first file layout for generated reports and promotion records
+3. only then begin code-level generation scaffolding
