@@ -21,15 +21,16 @@ The model may draft content. SteerLab still owns the request shape, pack selecti
 
 ## Internal Objects
 
-The first-pass internal generation spec centers on five objects:
+The first-pass internal generation spec now centers on six objects:
 
 - `GenerationRequest`
 - `SpecialtyPack`
+- `ScenarioSkeleton`
 - `DraftChallengePackage`
 - `ValidationReport`
 - `PromotionRecord`
 
-These five boundaries are enough to stabilize the first implementation planning.
+These boundaries are enough to stabilize the next implementation planning step.
 
 ## `GenerationRequest`
 
@@ -488,12 +489,108 @@ The intended flow is:
 1. normalize raw intent into a `GenerationRequest`
 2. select a `SpecialtyPack`
 3. combine request constraints with pack guidance
-4. produce a `DraftChallengePackage`
-5. validate, repair, and promote as appropriate
+4. produce a `ScenarioSkeleton`
+5. validate the skeleton
+6. produce a `DraftChallengePackage`
+7. validate, repair, and promote as appropriate
 
 `GenerationRequest` says what is wanted.
 
 `SpecialtyPack` says how that specialty should stay realistic and useful.
+
+## `ScenarioSkeleton`
+
+`ScenarioSkeleton` is the intermediate planning object between request-pack selection and full draft-package generation.
+
+It exists so SteerLab can validate scenario clarity and evidence design before asking a model to generate a full challenge package.
+
+### Purpose
+
+`ScenarioSkeleton` should answer:
+
+- what the scenario is
+- what artifact bundle should exist
+- what each artifact is supposed to prove
+- whether the scenario is coherent enough to justify full draft generation
+
+### Required Fields
+
+```ts
+type ScenarioSkeleton = {
+  skeleton_id: string;
+  request_ref: string;
+  specialty_pack_ref: string;
+  generated_at: string;
+  challenge_outline: {
+    title: string;
+    archetype: ArchetypeId;
+    category: string;
+    description: string;
+    context: string;
+    difficulty: Difficulty;
+    estimated_time_minutes: number;
+    tags?: string[];
+  };
+  artifact_plan: Array<{
+    path: string;
+    kind: ArtifactKind;
+    purpose: string;
+    evidentiary_role: string;
+  }>;
+};
+```
+
+### Field Notes
+
+#### `challenge_outline`
+
+This is the minimum challenge frame before full authoring.
+
+It should be specific enough to validate:
+
+- category quality
+- context clarity
+- scope and time fit
+- archetype fidelity
+
+#### `artifact_plan`
+
+This is not the final artifact bundle.
+
+It is the evidence plan.
+
+The important field here is `evidentiary_role`, which should explain what each artifact contributes to the scenario rather than just naming a file type.
+
+### Example
+
+```yaml
+skeleton_id: skeleton/devops/2026-03-12-001
+request_ref: requests/2026-03-12/devops-rollout-debugging.yaml
+specialty_pack_ref: specialties/devops/pack.yaml
+generated_at: "2026-03-12T14:40:00Z"
+challenge_outline:
+  title: Diagnose a failed rollback after a partial rollout
+  archetype: broken-system-investigation
+  category: deployment
+  description: Investigate why a rollback did not restore service health.
+  context: |
+    A service rolled out to a partial canary.
+    Early health checks passed, but ten minutes later error rate rose and the rollback did not fully recover the system.
+  difficulty: intermediate
+  estimated_time_minutes: 30
+  tags:
+    - deployment
+    - rollback
+artifact_plan:
+  - path: artifacts/deploy.log
+    kind: log
+    purpose: Deployment and application log excerpt
+    evidentiary_role: Shows the timing relationship between rollout, health checks, and the rollback trigger.
+  - path: artifacts/config.yaml
+    kind: yaml
+    purpose: Relevant service configuration excerpt
+    evidentiary_role: Shows the rollout and health-check configuration that may have created the rollback gap.
+```
 
 ## `DraftChallengePackage`
 

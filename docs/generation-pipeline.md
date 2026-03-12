@@ -4,6 +4,7 @@ This document defines the edges of a future challenge-generation pipeline for St
 
 For the first concrete internal object shapes, see [`docs/generation-spec.md`](./generation-spec.md).
 For the first generated-output file layout, see [`docs/generation-output-layout.md`](./generation-output-layout.md).
+For the staged-generation direction, see [`docs/staged-generation.md`](./staged-generation.md).
 
 The goal is not to let models produce first-class content unchecked. The goal is to define a bounded pipeline that can generate useful draft challenges while preserving SteerLab's structure, quality bar, and future extensibility.
 
@@ -130,7 +131,31 @@ This stage answers:
 - what realism constraints apply?
 - what should be avoided?
 
-### 3. Draft Scenario Generation
+### 3. Scenario Skeleton Generation
+
+Generate a narrow planning object before full challenge authoring.
+
+Expected outputs:
+
+- title
+- category
+- description
+- context
+- artifact plan
+
+This stage should be fast, bounded, and validated before full artifact content is written.
+
+### 4. Skeleton Validation
+
+This stage should confirm:
+
+- the scenario is coherent
+- the category is specific enough
+- the artifact plan supports the scenario
+- the challenge is not already giving away the answer
+- the time budget and difficulty still make sense
+
+### 5. Full Draft Generation
 
 Generate a draft challenge package.
 
@@ -144,7 +169,7 @@ Expected outputs:
 
 This stage should still be treated as draft production only.
 
-### 4. Structural Validation
+### 6. Structural Validation
 
 Run the normal SteerLab validator and any artifact existence checks.
 
@@ -156,7 +181,7 @@ This stage should confirm:
 - required fields are present
 - challenge shape is loadable by the runner
 
-### 5. Semantic Validation
+### 7. Semantic Validation
 
 Structural validity is necessary but not sufficient.
 
@@ -171,7 +196,7 @@ SteerLab should also check:
 
 This can include model-assisted critique, but the critique rules should be SteerLab-defined.
 
-### 6. Repair Loop
+### 8. Repair Loop
 
 If a draft fails validation, the system should attempt bounded repair.
 
@@ -184,7 +209,7 @@ Examples:
 
 The repair loop should be capped. Failed drafts should be rejected rather than endlessly massaged.
 
-### 7. Promotion
+### 9. Promotion
 
 Generated content should not all land in the same place.
 
@@ -222,12 +247,14 @@ Repository-bound content should require a stricter path.
 Recommended flow:
 
 1. generate draft
-2. validate structurally
-3. validate semantically
-4. repair if needed
-5. stage into `generated/review/`
-6. human review
-7. commit or reject
+2. validate the scenario skeleton
+3. generate the full draft
+4. validate structurally
+5. validate semantically
+6. repair if needed
+7. stage into `generated/review/`
+8. human review
+9. commit or reject
 
 This keeps the public challenge library from becoming an undifferentiated stream of model output.
 
@@ -262,6 +289,10 @@ Defines domain-specific generation and validation guidance.
 ### `Draft Challenge Package`
 
 Contains draft YAML, draft artifacts, and metadata about how it was produced.
+
+### `ScenarioSkeleton`
+
+Contains the narrow scenario frame and artifact plan that full draft generation should follow.
 
 ### `Validation Report`
 

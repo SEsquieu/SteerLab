@@ -79,6 +79,33 @@ export type DraftArtifactRef = {
   purpose: string;
 };
 
+export type ScenarioSkeletonArtifactPlan = DraftArtifactRef & {
+  evidentiary_role: string;
+};
+
+export type ScenarioSkeleton = {
+  skeleton_id: string;
+  request_ref: string;
+  specialty_pack_ref: string;
+  generated_at: string;
+  challenge_outline: {
+    title: string;
+    archetype: ArchetypeId;
+    category: string;
+    description: string;
+    context: string;
+    difficulty: Difficulty;
+    estimated_time_minutes: number;
+    tags?: string[];
+  };
+  artifact_plan: ScenarioSkeletonArtifactPlan[];
+  generator_metadata?: {
+    provider?: string;
+    model?: string;
+    run_id?: string;
+  };
+};
+
 export type DraftArtifact = DraftArtifactRef & {
   content: string;
 };

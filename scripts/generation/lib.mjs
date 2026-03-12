@@ -81,6 +81,265 @@ export function validateDraftPackage(draftPackage) {
   }
 }
 
+export function validateScenarioSkeleton(skeleton) {
+  if (!skeleton || typeof skeleton !== "object" || Array.isArray(skeleton)) {
+    fail("Input is missing a valid `scenario_skeleton` object.");
+  }
+
+  for (const field of ["skeleton_id", "request_ref", "specialty_pack_ref", "generated_at"]) {
+    if (!isNonEmptyString(skeleton[field])) {
+      fail(`\`scenario_skeleton.${field}\` must be a non-empty string.`);
+    }
+  }
+
+  if (!skeleton.challenge_outline || typeof skeleton.challenge_outline !== "object" || Array.isArray(skeleton.challenge_outline)) {
+    fail("`scenario_skeleton.challenge_outline` must be an object.");
+  }
+
+  const outline = skeleton.challenge_outline;
+  for (const field of ["title", "archetype", "category", "description", "context", "difficulty"]) {
+    if (!isNonEmptyString(outline[field])) {
+      fail(`\`scenario_skeleton.challenge_outline.${field}\` must be a non-empty string.`);
+    }
+  }
+
+  if (!Number.isInteger(outline.estimated_time_minutes) || outline.estimated_time_minutes <= 0) {
+    fail("`scenario_skeleton.challenge_outline.estimated_time_minutes` must be a positive integer.");
+  }
+
+  if (!Array.isArray(skeleton.artifact_plan) || skeleton.artifact_plan.length === 0) {
+    fail("`scenario_skeleton.artifact_plan` must be a non-empty array.");
+  }
+
+  skeleton.artifact_plan.forEach((artifact, index) => {
+    if (!artifact || typeof artifact !== "object" || Array.isArray(artifact)) {
+      fail(`\`scenario_skeleton.artifact_plan[${index}]\` must be an object.`);
+    }
+
+    for (const key of ["path", "kind", "purpose", "evidentiary_role"]) {
+      if (!isNonEmptyString(artifact[key])) {
+        fail(`\`scenario_skeleton.artifact_plan[${index}].${key}\` must be a non-empty string.`);
+      }
+    }
+  });
+}
+
+export function buildSkeletonValidationReport({ skeleton, request, pack }) {
+  validateScenarioSkeleton(skeleton);
+
+  const issues = [];
+  const outline = skeleton.challenge_outline;
+  const plan = skeleton.artifact_plan;
+  const allowedArchetypes = [
+    "broken-system-investigation",
+    "architecture-thought-experiment",
+    "tool-steering-challenge",
+  ];
+  const allowedDifficulties = ["intro", "intermediate", "advanced"];
+
+  if (!isAllowedEnum(outline.archetype, allowedArchetypes)) {
+    collectIssue(issues, {
+      stage: "structural",
+      severity: "error",
+      code: "invalid-archetype",
+      message: "`challenge_outline.archetype` must be a valid archetype.",
+      field: "challenge_outline.archetype",
+    });
+  }
+
+  if (!isAllowedEnum(outline.difficulty, allowedDifficulties)) {
+    collectIssue(issues, {
+      stage: "structural",
+      severity: "error",
+      code: "invalid-difficulty",
+      message: "`challenge_outline.difficulty` must be a valid difficulty.",
+      field: "challenge_outline.difficulty",
+    });
+  }
+
+  if (request) {
+    if (outline.archetype !== request.archetype) {
+      collectIssue(issues, {
+        stage: "structural",
+        severity: "error",
+        code: "request-archetype-mismatch",
+        message: "Scenario skeleton archetype does not match the normalized request.",
+        field: "challenge_outline.archetype",
+      });
+    }
+
+    if (outline.difficulty !== request.difficulty) {
+      collectIssue(issues, {
+        stage: "structural",
+        severity: "error",
+        code: "request-difficulty-mismatch",
+        message: "Scenario skeleton difficulty does not match the normalized request.",
+        field: "challenge_outline.difficulty",
+      });
+    }
+
+    if (outline.estimated_time_minutes !== request.estimated_time_minutes) {
+      collectIssue(issues, {
+        stage: "structural",
+        severity: "error",
+        code: "request-time-mismatch",
+        message: "Scenario skeleton estimated time does not match the normalized request.",
+        field: "challenge_outline.estimated_time_minutes",
+      });
+    }
+
+    if (plan.length > request.artifact_profile.max_artifacts) {
+      collectIssue(issues, {
+        stage: "structural",
+        severity: "error",
+        code: "artifact-budget-exceeded",
+        message: "Artifact plan exceeds the requested artifact budget.",
+        field: "artifact_plan",
+      });
+    }
+
+    for (const requiredKind of request.artifact_profile.required_kinds ?? []) {
+      if (!plan.some((artifact) => artifact.kind === requiredKind)) {
+        collectIssue(issues, {
+          stage: "structural",
+          severity: "error",
+          code: "required-artifact-kind-missing",
+          message: `Required artifact kind is missing from the artifact plan: ${requiredKind}`,
+          field: "artifact_plan",
+        });
+      }
+    }
+  }
+
+  if (pack) {
+    if (Array.isArray(pack.supported_archetypes) && !pack.supported_archetypes.includes(outline.archetype)) {
+      collectIssue(issues, {
+        stage: "semantic",
+        severity: "error",
+        code: "unsupported-pack-archetype",
+        message: "Selected specialty pack does not support the skeleton archetype.",
+        field: "challenge_outline.archetype",
+      });
+    }
+
+    if (isNonEmptyString(pack.id) && outline.category === pack.id) {
+      collectIssue(issues, {
+        stage: "semantic",
+        severity: "warning",
+        code: "generic-category",
+        message: "Scenario skeleton category matches the specialty pack id exactly and may be too broad.",
+        field: "challenge_outline.category",
+      });
+    }
+  }
+
+  const duplicateArtifactPaths = new Set();
+  const seenArtifactPaths = new Set();
+  plan.forEach((artifact, index) => {
+    if (!artifact.path.startsWith("artifacts/")) {
+      collectIssue(issues, {
+        stage: "structural",
+        severity: "error",
+        code: "artifact-path-outside-bundle",
+        message: `Artifact plan path must live under artifacts/: ${artifact.path}`,
+        field: `artifact_plan[${index}].path`,
+      });
+    }
+
+    if (seenArtifactPaths.has(artifact.path)) {
+      duplicateArtifactPaths.add(artifact.path);
+    }
+    seenArtifactPaths.add(artifact.path);
+  });
+
+  duplicateArtifactPaths.forEach((artifactPath) => {
+    collectIssue(issues, {
+      stage: "structural",
+      severity: "error",
+      code: "duplicate-artifact-path",
+      message: `Artifact plan contains duplicate path: ${artifactPath}`,
+      field: "artifact_plan",
+    });
+  });
+
+  if (outline.context.trim().split(/\s+/).length < 20) {
+    collectIssue(issues, {
+      stage: "semantic",
+      severity: "warning",
+      code: "thin-context",
+      message: "Scenario skeleton context is brief and may be too thin to support a full challenge.",
+      field: "challenge_outline.context",
+    });
+  }
+
+  if (outline.description.trim().split(/\s+/).length < 10) {
+    collectIssue(issues, {
+      stage: "semantic",
+      severity: "warning",
+      code: "thin-description",
+      message: "Scenario skeleton description is brief and may be too generic.",
+      field: "challenge_outline.description",
+    });
+  }
+
+  if (/\b(root cause|because|caused by|triggered by)\b/i.test(outline.context)) {
+    collectIssue(issues, {
+      stage: "semantic",
+      severity: "warning",
+      code: "context-too-leading",
+      message: "Scenario skeleton context may be naming the causal chain too directly.",
+      field: "challenge_outline.context",
+    });
+  }
+
+  const artifactKinds = new Set(plan.map((artifact) => artifact.kind));
+  if (artifactKinds.size === 1 && plan.length > 1) {
+    collectIssue(issues, {
+      stage: "semantic",
+      severity: "warning",
+      code: "low-artifact-diversity",
+      message: "Artifact plan may be too narrow to support a strong investigation.",
+      field: "artifact_plan",
+    });
+  }
+
+  if (plan.some((artifact) => artifact.purpose.trim().toLowerCase() === artifact.evidentiary_role.trim().toLowerCase())) {
+    collectIssue(issues, {
+      stage: "semantic",
+      severity: "warning",
+      code: "weak-evidentiary-role",
+      message: "One or more artifact evidentiary roles repeat the artifact purpose instead of clarifying what the artifact proves.",
+      field: "artifact_plan",
+    });
+  }
+
+  const structuralStatus = hasIssueSeverity(issues.filter((issue) => issue.stage === "structural"), "error")
+    ? "fail"
+    : "pass";
+  const semanticIssues = issues.filter((issue) => issue.stage === "semantic");
+  const semanticStatus = semanticIssues.some((issue) => issue.severity === "error")
+    ? "fail"
+    : semanticIssues.some((issue) => issue.severity === "warning")
+      ? "warn"
+      : "pass";
+
+  let overallRecommendation = "promote";
+  if (structuralStatus === "fail" || semanticStatus === "fail") {
+    overallRecommendation = "reject";
+  } else if (semanticStatus === "warn") {
+    overallRecommendation = "repair";
+  }
+
+  return {
+    challenge_id: skeleton.skeleton_id,
+    structural_status: structuralStatus,
+    semantic_status: semanticStatus,
+    issues,
+    overall_recommendation: overallRecommendation,
+    generated_at: new Date().toISOString(),
+  };
+}
+
 function looksLikeDraftChallengePackage(candidate) {
   return Boolean(
     candidate
@@ -933,6 +1192,17 @@ export function buildMetadata(envelope, inputPath) {
   };
 }
 
+export function buildSkeletonMetadata(skeleton, inputPath) {
+  return {
+    skeleton_id: skeleton.skeleton_id,
+    request_ref: skeleton.request_ref,
+    specialty_pack_ref: skeleton.specialty_pack_ref,
+    generated_at: skeleton.generated_at,
+    source_input: inputPath,
+    generator_metadata: skeleton.generator_metadata ?? {},
+  };
+}
+
 export function slugify(value) {
   return String(value)
     .trim()
@@ -989,6 +1259,24 @@ export function writeDraft(rootDir, envelope, inputPath) {
     const artifactPath = path.join(outputDir, artifact.path);
     ensureDirectory(path.dirname(artifactPath));
     fs.writeFileSync(artifactPath, String(artifact.content ?? ""), "utf8");
+  }
+
+  return outputDir;
+}
+
+export function writeSkeleton(rootDir, envelope, inputPath) {
+  const { scenario_skeleton: skeleton } = envelope;
+  const runId = skeleton.generator_metadata?.run_id ?? skeleton.skeleton_id;
+  const outputDir = path.join(rootDir, "generated", "skeletons", runId);
+
+  ensureDirectory(outputDir);
+
+  writeYamlFile(path.join(outputDir, "skeleton.yaml"), skeleton);
+  writeYamlFile(path.join(outputDir, "request.yaml"), envelope.request);
+  writeYamlFile(path.join(outputDir, "metadata.yaml"), buildSkeletonMetadata(skeleton, inputPath));
+
+  if (envelope.validation_report) {
+    writeYamlFile(path.join(outputDir, "validation-report.yaml"), envelope.validation_report);
   }
 
   return outputDir;

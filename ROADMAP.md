@@ -62,6 +62,7 @@ Status: architecture defined, implementation largely open.
 - separate scenario generation, coaching, and candidate tool interaction as distinct roles
 - support optional scenario generation for Training Mode
 - define the generation-request, specialty-pack, validation, and promotion boundaries for future challenge generation
+- split generation into staged passes so scenario framing and evidence design can be validated before full draft authoring
 - define the report and decision artifacts that connect generation, validation, repair, and promotion
 - support optional coaching for Training Mode under explicit pedagogical constraints
 - define authentic candidate-model trace capture for Evaluation Mode
