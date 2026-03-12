@@ -957,6 +957,10 @@ export function copyDirectory(sourceDir, destinationDir) {
   }
 }
 
+export function removeDirectory(dirPath) {
+  fs.rmSync(dirPath, { recursive: true, force: true });
+}
+
 export function writeDraft(rootDir, envelope, inputPath) {
   const { draft_package: draftPackage } = envelope;
   const runId = draftPackage.run_id ?? draftPackage.challenge_id;

@@ -225,8 +225,9 @@ Recommended flow:
 2. validate structurally
 3. validate semantically
 4. repair if needed
-5. human review
-6. commit or reject
+5. stage into `generated/review/`
+6. human review
+7. commit or reject
 
 This keeps the public challenge library from becoming an undifferentiated stream of model output.
 

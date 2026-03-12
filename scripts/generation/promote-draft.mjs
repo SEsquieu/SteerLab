@@ -18,6 +18,7 @@ const rootDir = process.cwd();
 function parseArgs(argv) {
   const args = {
     overwrite: false,
+    allowDraftSource: false,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -25,6 +26,11 @@ function parseArgs(argv) {
 
     if (token === "--overwrite") {
       args.overwrite = true;
+      continue;
+    }
+
+    if (token === "--allow-draft-source") {
+      args.allowDraftSource = true;
       continue;
     }
 
@@ -57,7 +63,9 @@ function parseArgs(argv) {
   }
 
   if (!isNonEmptyString(args.draftDir)) {
-    fail("Usage: node scripts/generation/promote-draft.mjs <generated-draft-dir> [--slug <slug>] [--overwrite]");
+    fail(
+      "Usage: node scripts/generation/promote-draft.mjs <generated-review-dir> [--slug <slug>] [--overwrite] [--allow-draft-source]",
+    );
   }
 
   return args;
@@ -118,11 +126,11 @@ function loadDraftPackageFromDirectory(draftDir) {
   return { draftPackage, metadata };
 }
 
-function createPromotionRecord({ challengeId, validationReportRef, promotedPath, recommendation }) {
+function createPromotionRecord({ challengeId, sourceMode, validationReportRef, promotedPath, recommendation }) {
   return {
     challenge_id: challengeId,
-    source_mode: "draft-review",
-    destination: "repo-candidate",
+    source_mode: sourceMode,
+    destination: "repo-curated",
     decision: "approved",
     basis: "human-review",
     validation_report_ref: validationReportRef,
@@ -135,7 +143,7 @@ function createPromotionRecord({ challengeId, validationReportRef, promotedPath,
     next_actions: [
       "Run npm run validate:challenges.",
       "Restart the runner dev server if it was already running.",
-      "Review the promoted challenge for semantic quality before keeping it curated.",
+      "Review the promoted challenge in the runner and decide whether it belongs in the curated library.",
     ],
   };
 }
@@ -146,6 +154,22 @@ function main() {
 
   if (!pathExists(draftDir)) {
     fail(`Draft directory does not exist: ${args.draftDir}`);
+  }
+
+  const normalizedDraftDir = draftDir.replace(/\\/g, "/");
+  const isReviewSource = normalizedDraftDir.includes("/generated/review/");
+  const isDraftSource = normalizedDraftDir.includes("/generated/drafts/");
+
+  if (!isReviewSource) {
+    if (isDraftSource && args.allowDraftSource) {
+      // Allow explicit draft-to-curated jumps for debugging only.
+    } else if (isDraftSource) {
+      fail(
+        "Promote from generated/review/ by default. Stage the draft first with generate:stage-review, or use --allow-draft-source only for debugging.",
+      );
+    } else {
+      fail("Promotion source must come from generated/review/ or generated/drafts/.");
+    }
   }
 
   const { draftPackage } = loadDraftPackageFromDirectory(draftDir);
@@ -189,6 +213,7 @@ function main() {
   const promotedPath = path.relative(rootDir, targetDir);
   const promotionRecord = createPromotionRecord({
     challengeId: challenge.id,
+    sourceMode: request?.intended_mode ?? "draft-review",
     validationReportRef: "validation-report.yaml",
     promotedPath,
     recommendation: validationReport.overall_recommendation,

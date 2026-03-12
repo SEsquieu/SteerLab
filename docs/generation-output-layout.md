@@ -86,6 +86,14 @@ Repository-promotion candidates that are ready for closer human inspection.
 
 This is the most appropriate staging area before content is manually promoted into [`challenges/`](../challenges).
 
+Only drafts with:
+
+- `structural_status: pass`
+- `semantic_status: pass`
+- `overall_recommendation: promote`
+
+should normally be staged here.
+
 ## File Roles
 
 ### `challenge.yaml`
@@ -168,7 +176,7 @@ For v1:
 - support one draft directory per generated challenge
 - write YAML files, not databases
 - prefer replace-in-place updates for validation and repair
-- treat promotion as a file move or explicit copy step
+- treat review staging and curated promotion as explicit copy steps
 
 Avoid in v1:
 
@@ -180,10 +188,5 @@ Avoid in v1:
 
 With this layout defined, the next useful implementation step is:
 
-1. create shared TypeScript types for:
-   - `GenerationRequest`
-   - `SpecialtyPack`
-   - `DraftChallengePackage`
-   - `ValidationReport`
-   - `PromotionRecord`
-2. add a small scaffold that can serialize a normalized request and a draft package into `generated/drafts/`
+1. make review staging the default path between validated drafts and curated repo content
+2. expose a compact review summary so generated candidates are easy to inspect before curation
