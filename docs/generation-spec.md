@@ -21,14 +21,15 @@ The model may draft content. SteerLab still owns the request shape, pack selecti
 
 ## Internal Objects
 
-The first-pass internal generation spec centers on four objects:
+The first-pass internal generation spec centers on five objects:
 
 - `GenerationRequest`
 - `SpecialtyPack`
+- `DraftChallengePackage`
 - `ValidationReport`
 - `PromotionRecord`
 
-`DraftChallengePackage` should still follow as a separate object, but these four boundaries are enough to stabilize the first implementation planning.
+These five boundaries are enough to stabilize the first implementation planning.
 
 ## `GenerationRequest`
 
@@ -494,6 +495,178 @@ The intended flow is:
 
 `SpecialtyPack` says how that specialty should stay realistic and useful.
 
+## `DraftChallengePackage`
+
+`DraftChallengePackage` is the structured output of draft generation before validation and promotion decisions are finalized.
+
+It should be the canonical handoff object between:
+
+- request normalization and generation
+- generation and validation
+- validation and repair
+- repair and promotion
+
+### Purpose
+
+`DraftChallengePackage` should answer:
+
+- what draft challenge content was produced
+- what artifacts belong to that draft
+- what request and specialty pack shaped it
+- what generation metadata should be preserved for traceability
+
+### Required Fields
+
+```ts
+type DraftChallengePackage = {
+  challenge_id: string;
+  request_ref: string;
+  specialty_pack_ref: string;
+  generated_at: string;
+  challenge_definition: DraftChallengeDefinition;
+  artifacts: DraftArtifact[];
+};
+```
+
+### Supporting Types
+
+```ts
+type DraftChallengeDefinition = {
+  id: string;
+  title: string;
+  archetype: ArchetypeId;
+  category: string;
+  description: string;
+  context: string;
+  supplied_artifacts: DraftArtifactRef[];
+  candidate_instructions: string[];
+  evaluation_signals: string[];
+  difficulty: "intro" | "intermediate" | "advanced";
+  estimated_time_minutes: number;
+  tags?: string[];
+  rubric?: {
+    strong?: string[];
+    weak?: string[];
+  };
+  training_support?: {
+    reflection_prompts?: string[];
+    thinking_checklist?: string[];
+    checkpoints?: Array<{
+      id: string;
+      title: string;
+      prompt: string;
+    }>;
+    hints?: Array<{
+      title: string;
+      content: string;
+    }>;
+    worked_examples?: Array<{
+      label: string;
+      href: string;
+    }>;
+  };
+};
+
+type DraftArtifactRef = {
+  path: string;
+  kind: string;
+  purpose: string;
+};
+
+type DraftArtifact = {
+  path: string;
+  kind: string;
+  purpose: string;
+  content: string;
+};
+```
+
+### Field Semantics
+
+#### `challenge_id`
+
+The draft’s stable id.
+
+This should match `challenge_definition.id`.
+
+#### `request_ref`
+
+Reference to the `GenerationRequest` that produced the draft.
+
+This keeps generation reproducible and reviewable.
+
+#### `specialty_pack_ref`
+
+Reference to the `SpecialtyPack` used during generation.
+
+This makes it possible to see which pack shaped the output when debugging generation quality.
+
+#### `generated_at`
+
+Timestamp for draft creation.
+
+#### `challenge_definition`
+
+The generated challenge definition before it is serialized to `challenge.yaml`.
+
+This should closely mirror the repository challenge schema, but it remains an internal draft object until validation and promotion succeed.
+
+#### `artifacts`
+
+The draft artifact bundle that belongs with the challenge definition.
+
+This object exists so generation does not have to reason in terms of files on disk immediately.
+
+### Optional Fields
+
+```ts
+type DraftChallengePackageOptional = {
+  generation_notes?: string[];
+  generator_metadata?: {
+    provider?: string;
+    model?: string;
+    run_id?: string;
+  };
+  repair_history?: string[];
+};
+```
+
+### Example
+
+```yaml
+challenge_id: broken-system-investigation-devops-rollout-regression
+request_ref: requests/2026-03-12/devops-rollout-debugging.yaml
+specialty_pack_ref: specialties/devops/pack.yaml
+generated_at: "2026-03-12T14:50:00Z"
+challenge_definition:
+  id: broken-system-investigation-devops-rollout-regression
+  title: Diagnose a rollout regression after a partial canary deploy
+  archetype: broken-system-investigation
+  category: deployment
+  description: Investigate why error rate rose after a canary rollout that looked healthy at first.
+  context: |
+    ...
+  supplied_artifacts:
+    - path: artifacts/deploy.log
+      kind: log
+      purpose: Deployment and application log excerpt
+  candidate_instructions:
+    - Identify the most likely failure mechanism.
+  evaluation_signals:
+    - Connects the symptoms to rollout and configuration behavior.
+  difficulty: intermediate
+  estimated_time_minutes: 30
+artifacts:
+  - path: artifacts/deploy.log
+    kind: log
+    purpose: Deployment and application log excerpt
+    content: |
+      2026-03-12T14:05:11Z ...
+generator_metadata:
+  provider: local
+  model: example-model
+```
+
 ## `ValidationReport`
 
 `ValidationReport` is the structured output of structural validation, semantic validation, and any repair recommendations.
@@ -760,6 +933,5 @@ These should stay open for now:
 
 After this spec, the next sensible move is:
 
-1. define `DraftChallengePackage`
-2. decide the first file layout for generated reports and promotion records
-3. only then begin code-level generation scaffolding
+1. decide the first file layout for draft packages, reports, and promotion records
+2. only then begin code-level generation scaffolding
