@@ -161,13 +161,30 @@ Generate a draft challenge package.
 
 Expected outputs:
 
-- `challenge.yaml` draft
-- draft artifacts
-- evaluation signals
-- optional rubric candidates
-- optional `training_support`
+- a seed
+- a procedural skeleton
+- a short context block
+- an artifact blueprint
+- independently generated artifacts
+- an evaluation and training bundle
+- an assembled `DraftChallengePackage`
 
-This stage should still be treated as draft production only.
+This stage should be decomposed into narrow calls wherever possible.
+
+SteerLab should own:
+
+- ids
+- archetype and difficulty propagation
+- artifact slots and paths
+- scaffold counts
+- final YAML layout
+
+The model should own:
+
+- seed framing
+- short context wording
+- artifact-specific content
+- evaluation and training wording
 
 ### 6. Structural Validation
 
@@ -246,15 +263,16 @@ Repository-bound content should require a stricter path.
 
 Recommended flow:
 
-1. generate draft
-2. validate the scenario skeleton
-3. generate the full draft
-4. validate structurally
-5. validate semantically
-6. repair if needed
-7. stage into `generated/review/`
-8. human review
-9. commit or reject
+1. generate seed
+2. build the skeleton
+3. generate the remaining narrow content stages
+4. assemble the full draft
+5. validate structurally
+6. validate semantically
+7. repair if needed
+8. stage into `generated/review/`
+9. human review
+10. commit or reject
 
 This keeps the public challenge library from becoming an undifferentiated stream of model output.
 

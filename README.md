@@ -251,6 +251,14 @@ Read the core docs:
 - [`docs/reviewer-guide.md`](./docs/reviewer-guide.md)
 - [`docs/training-mode.md`](./docs/training-mode.md)
 
+The current small-model generation entry point is:
+
+```bash
+npm run generate:challenge -- scripts/generation/example-request-embedded.yaml --pack specialties/embedded/pack.yaml --model qwen3.5:4b --mode fast
+```
+
+This flow splits generation into narrow stages, persists intermediate artifacts, records per-stage timing, and keeps deterministic assembly inside SteerLab.
+
 The current seed library includes:
 
 - 3 Broken System Investigation challenges

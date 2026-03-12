@@ -8,6 +8,7 @@
     "build": "npm --prefix apps/runner run build",
     "preview": "npm --prefix apps/runner run preview",
     "validate:challenges": "node scripts/validate-challenges.mjs",
+    "generate:challenge": "node scripts/generation/generate-challenge.mjs",
     "generate:ollama-skeleton": "node scripts/generation/ollama-skeleton.mjs",
     "generate:validate-skeleton": "node scripts/generation/validate-skeleton.mjs",
     "generate:ollama-draft-from-skeleton": "node scripts/generation/ollama-draft-from-skeleton.mjs",

@@ -48,6 +48,13 @@ export type GenerationRequest = {
   source_request?: string;
 };
 
+export type ChallengeSeed = {
+  title: string;
+  premise: string;
+  issue_class: string;
+  artifact_plan: ArtifactKind[];
+};
+
 export type ArtifactGuidance = {
   preferred_kinds: ArtifactKind[];
   common_pairs?: Array<[ArtifactKind, ArtifactKind]>;
@@ -81,6 +88,7 @@ export type DraftArtifactRef = {
 
 export type ScenarioSkeletonArtifactPlan = DraftArtifactRef & {
   evidentiary_role: string;
+  clue?: string;
 };
 
 export type ScenarioSkeleton = {
@@ -88,6 +96,7 @@ export type ScenarioSkeleton = {
   request_ref: string;
   specialty_pack_ref: string;
   generated_at: string;
+  issue_class?: string;
   challenge_outline: {
     title: string;
     archetype: ArchetypeId;
@@ -98,12 +107,50 @@ export type ScenarioSkeleton = {
     estimated_time_minutes: number;
     tags?: string[];
   };
-  artifact_plan: ScenarioSkeletonArtifactPlan[];
+  artifact_plan?: ScenarioSkeletonArtifactPlan[];
+  artifact_slots?: DraftArtifactRef[];
+  scaffold_plan?: {
+    reflection_prompt_count: number;
+    checklist_count: number;
+    checkpoint_count: number;
+    hint_count: number;
+  };
   generator_metadata?: {
     provider?: string;
     model?: string;
     run_id?: string;
   };
+};
+
+export type ContextBlock = {
+  description: string;
+  context: string;
+  candidate_instructions: string[];
+};
+
+export type ArtifactBlueprint = ScenarioSkeletonArtifactPlan & {
+  slot_id?: string;
+  clue: string;
+};
+
+export type ArtifactContent = {
+  path: string;
+  content: string;
+};
+
+export type EvaluationBundle = {
+  evaluation_signals: string[];
+  reflection_prompts?: string[];
+  thinking_checklist?: string[];
+  checkpoints?: Array<{
+    id: string;
+    title: string;
+    prompt: string;
+  }>;
+  hints?: Array<{
+    title: string;
+    content: string;
+  }>;
 };
 
 export type DraftArtifact = DraftArtifactRef & {

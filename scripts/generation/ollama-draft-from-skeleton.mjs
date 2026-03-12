@@ -94,42 +94,20 @@ function loadInputs(skeletonDirArg, packPath) {
 
 function buildPrompt(request, skeleton, pack, packPath) {
   const promptShape = {
-    challenge_id: "string",
-    request_ref: skeleton.request_ref,
-    specialty_pack_ref: packPath.replace(/\\/g, "/"),
-    generated_at: "ISO-8601 timestamp",
-    challenge_definition: {
-      id: "must match challenge_id",
-      title: skeleton.challenge_outline.title,
-      archetype: skeleton.challenge_outline.archetype,
-      category: skeleton.challenge_outline.category,
-      description: skeleton.challenge_outline.description,
-      context: skeleton.challenge_outline.context,
-      supplied_artifacts: skeleton.artifact_plan.map((artifact) => ({
-        path: artifact.path,
-        kind: artifact.kind,
-        purpose: artifact.purpose,
-      })),
-      candidate_instructions: ["string"],
-      evaluation_signals: ["string"],
-      difficulty: skeleton.challenge_outline.difficulty,
-      estimated_time_minutes: skeleton.challenge_outline.estimated_time_minutes,
-      tags: skeleton.challenge_outline.tags ?? ["string"],
-      training_support: request.intended_mode === "training"
-        ? {
-            reflection_prompts: ["string"],
-            thinking_checklist: ["string"],
-            checkpoints: [{ id: "string", title: "string", prompt: "string" }],
-            hints: [{ title: "string", content: "string" }],
-          }
-        : undefined,
-    },
     artifacts: skeleton.artifact_plan.map((artifact) => ({
       path: artifact.path,
-      kind: artifact.kind,
-      purpose: artifact.purpose,
       content: "string",
     })),
+    candidate_instructions: ["string"],
+    evaluation_signals: ["string"],
+    training_support: request.intended_mode === "training"
+      ? {
+          reflection_prompts: ["string"],
+          thinking_checklist: ["string"],
+          checkpoints: [{ id: "string", title: "string", prompt: "string" }],
+          hints: [{ title: "string", content: "string" }],
+        }
+      : undefined,
   };
 
   const packSubset = {
@@ -144,7 +122,7 @@ function buildPrompt(request, skeleton, pack, packPath) {
   };
 
   return `
-You are expanding an approved SteerLab ScenarioSkeleton into a full DraftChallengePackage.
+You are expanding an approved SteerLab ScenarioSkeleton into the creative content for a DraftChallengePackage.
 
 Return ONLY valid JSON.
 Do not include markdown fences.
@@ -156,16 +134,13 @@ ${JSON.stringify(promptShape, null, 2)}
 
 Hard requirements:
 - preserve the scenario skeleton framing
-- preserve the artifact plan paths, kinds, and purposes exactly
-- challenge_id must equal challenge_definition.id
-- challenge_definition.archetype must be "${request.archetype}"
-- challenge_definition.difficulty must be "${request.difficulty}"
-- challenge_definition.estimated_time_minutes must be ${request.estimated_time_minutes}
-- specialty_pack_ref must be "${packPath.replace(/\\/g, "/")}"
+- preserve the artifact plan paths exactly
 - each artifact content must reinforce the scenario without fully solving it
 - candidate instructions and evaluation signals must be anchored to the named artifacts
 - keep the scenario realistic and serious
 - avoid gimmicks and toy examples
+- do not return fields that are already fixed by the scenario skeleton
+- keep artifact contents concise but evidence-rich
 
 Normalized request:
 ${JSON.stringify(request, null, 2)}
@@ -176,6 +151,90 @@ ${JSON.stringify(skeleton, null, 2)}
 Specialty pack guidance:
 ${JSON.stringify(packSubset, null, 2)}
 `.trim();
+}
+
+function assembleDraftPackage(payload, skeleton, request, packPath, options, skeletonDir, runId) {
+  const artifactPlan = skeleton.artifact_plan ?? [];
+  const artifactMap = new Map((payload.artifacts ?? []).map((artifact) => [artifact.path, artifact]));
+
+  const artifacts = artifactPlan.map((artifact) => ({
+    path: artifact.path,
+    kind: artifact.kind,
+    purpose: artifact.purpose,
+    content: String(artifactMap.get(artifact.path)?.content ?? ""),
+  }));
+
+  return {
+    run_id: runId,
+    challenge_id: skeleton.skeleton_id,
+    request_ref: skeleton.request_ref,
+    specialty_pack_ref: packPath.replace(/\\/g, "/"),
+    generated_at: new Date().toISOString(),
+    challenge_definition: {
+      id: skeleton.skeleton_id,
+      title: skeleton.challenge_outline.title,
+      archetype: skeleton.challenge_outline.archetype,
+      category: skeleton.challenge_outline.category,
+      description: skeleton.challenge_outline.description,
+      context: skeleton.challenge_outline.context,
+      supplied_artifacts: artifactPlan.map((artifact) => ({
+        path: artifact.path,
+        kind: artifact.kind,
+        purpose: artifact.purpose,
+      })),
+      candidate_instructions: payload.candidate_instructions ?? [],
+      evaluation_signals: payload.evaluation_signals ?? [],
+      difficulty: skeleton.challenge_outline.difficulty,
+      estimated_time_minutes: skeleton.challenge_outline.estimated_time_minutes,
+      tags: skeleton.challenge_outline.tags ?? [],
+      training_support: request.intended_mode === "training" ? payload.training_support ?? {} : undefined,
+    },
+    artifacts,
+    generator_metadata: {
+      provider: "ollama",
+      model: options.model,
+      run_id: runId,
+      skeleton_source: path.relative(rootDir, skeletonDir).replace(/\\/g, "/"),
+    },
+  };
+}
+
+function validateCreativePayload(payload, skeleton, request) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    fail("Model output must be an object.");
+  }
+
+  if (!Array.isArray(payload.artifacts)) {
+    fail("Model output must include an `artifacts` array.");
+  }
+
+  const expectedPaths = new Set((skeleton.artifact_plan ?? []).map((artifact) => artifact.path));
+  for (const artifact of payload.artifacts) {
+    if (!artifact || typeof artifact !== "object" || Array.isArray(artifact)) {
+      fail("Each generated artifact payload entry must be an object.");
+    }
+
+    if (!expectedPaths.has(artifact.path)) {
+      fail(`Generated artifact payload contains unexpected path: ${artifact.path}`);
+    }
+
+    if (typeof artifact.content !== "string") {
+      fail(`Generated artifact payload is missing string content for ${artifact.path}`);
+    }
+  }
+
+  if (!Array.isArray(payload.candidate_instructions) || payload.candidate_instructions.length === 0) {
+    fail("Model output must include non-empty `candidate_instructions`.");
+  }
+
+  if (!Array.isArray(payload.evaluation_signals) || payload.evaluation_signals.length === 0) {
+    fail("Model output must include non-empty `evaluation_signals`.");
+  }
+
+  if (request.intended_mode === "training" && payload.training_support !== undefined
+    && (typeof payload.training_support !== "object" || Array.isArray(payload.training_support))) {
+    fail("`training_support` must be an object when provided.");
+  }
 }
 
 function runOllama(model, prompt) {
@@ -220,18 +279,9 @@ function main() {
   const runId = fallbackRunId(request);
   const rawDir = writeRawOutput(runId, prompt, rawOutput);
   const extraction = extractJsonObject(rawOutput);
-  const draftPackage = extraction.parsed;
-
-  draftPackage.run_id = runId;
-  draftPackage.request_ref = skeleton.request_ref;
-  draftPackage.specialty_pack_ref = options.pack.replace(/\\/g, "/");
-  draftPackage.generator_metadata = {
-    ...(draftPackage.generator_metadata ?? {}),
-    provider: "ollama",
-    model: options.model,
-    run_id: runId,
-    skeleton_source: path.relative(rootDir, skeletonDir).replace(/\\/g, "/"),
-  };
+  const payload = extraction.parsed;
+  validateCreativePayload(payload, skeleton, request);
+  const draftPackage = assembleDraftPackage(payload, skeleton, request, options.pack, options, skeletonDir, runId);
 
   validateDraftPackage(draftPackage);
 

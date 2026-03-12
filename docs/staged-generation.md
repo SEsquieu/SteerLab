@@ -1,81 +1,86 @@
 # Staged Generation
 
-This document defines the next refinement of SteerLab challenge generation: moving from one large generation pass to a staged generation workflow.
+This document defines the small-model-friendly generation flow for SteerLab.
 
-The goal is not to add ceremony. The goal is to make generation:
+The goal is not just to add more steps. The goal is to:
 
-- faster
-- easier to validate
-- easier to debug
-- less likely to drift
-- better suited to smaller local models
+- reduce prompt size
+- reduce output size
+- isolate failure modes
+- preserve challenge quality
+- keep formatting and structure inside SteerLab instead of inside the model
 
-## Why Stage Generation
+## Core Principle
 
-A single-pass draft generator asks the model to do too many things at once:
+The model should generate only the creative pieces.
 
-- invent a realistic scenario
-- choose the right evidence shape
-- generate artifact contents
-- define candidate instructions
-- define evaluation signals
-- define training scaffolds
+SteerLab should own:
 
-That produces a few recurring problems:
+- ids
+- archetype and difficulty propagation
+- artifact slots and file paths
+- training scaffold counts
+- final package assembly
+- validation
+- repair targeting
 
-- prompts get too large
-- model reasoning gets verbose
-- scenarios become internally weak while still looking complete
-- artifacts do not always support the intended diagnosis
-- repairs become slow because the whole package has to be reconsidered
+## Current Modular Pipeline
 
-Staged generation keeps each step narrower and makes failure easier to localize.
+The current staged pipeline is:
 
-## Design Principle
+1. `ChallengeSeed`
+2. procedural `ScenarioSkeleton`
+3. `ContextBlock`
+4. `ArtifactBlueprint`
+5. per-artifact content generation
+6. `EvaluationBundle`
+7. procedural assembly into `DraftChallengePackage`
 
-SteerLab should decompose generation into bounded tasks with validation between them.
+This is a better fit for small local models than a single large draft-generation pass.
 
-The model should do one kind of work at a time.
+## Fast vs Full
 
-SteerLab should decide:
+The modular pipeline supports two operating modes:
 
-- what each stage is allowed to produce
-- what gets validated before the next stage
-- what should be regenerated versus repaired
+- `fast`
+  - uses a model for seed, context, per-artifact generation, and evaluation/training scaffolds
+  - uses procedural artifact blueprint generation
+  - minimizes prompt size and output size
+- `full`
+  - adds a dedicated artifact-blueprint generation call
+  - spends more model effort tightening evidence design before artifact generation
 
-## Recommended First Split
+## Stage 1: Challenge Seed
 
-SteerLab does not need a five-stage authoring pipeline immediately. A strong v1 split is enough:
+`ChallengeSeed` is the smallest creative planning object.
 
-1. `ScenarioSkeleton`
-2. `DraftChallengePackage`
+It contains:
 
-This already improves speed, drift control, and review quality.
+- title
+- one short premise
+- issue class
+- artifact kind plan
 
-## Stage 1: Scenario Skeleton
+This stage exists so the model can make one small high-level choice without being asked to author a whole challenge.
 
-`ScenarioSkeleton` is the narrow planning output that defines the challenge before artifact contents and training/reviewer scaffolds are written.
+## Stage 2: Procedural Scenario Skeleton
 
-It should answer:
+SteerLab turns the seed into a structured skeleton procedurally.
 
-- what the scenario is
-- what category it belongs to
-- what the system context is
-- what artifact bundle should exist
-- what each artifact is supposed to prove
+The skeleton contains:
 
-It should not yet contain:
+- id
+- archetype
+- category
+- difficulty
+- estimated time
+- tags
+- artifact slots
+- scaffold plan
 
-- full artifact contents
-- final evaluation signals
-- final training supports
-- rubric text
+The model is not asked to invent these fields again.
 
-### Purpose
-
-`ScenarioSkeleton` exists to test whether the scenario and evidence plan are coherent before the model spends tokens writing full artifacts and scaffolds.
-
-### Proposed Shape
+### Shape
 
 ```ts
 type ScenarioSkeleton = {
@@ -83,6 +88,7 @@ type ScenarioSkeleton = {
   request_ref: string;
   specialty_pack_ref: string;
   generated_at: string;
+  issue_class: string;
   challenge_outline: {
     title: string;
     archetype: ArchetypeId;
@@ -93,130 +99,141 @@ type ScenarioSkeleton = {
     estimated_time_minutes: number;
     tags?: string[];
   };
-  artifact_plan: Array<{
+  artifact_slots: Array<{
     path: string;
     kind: ArtifactKind;
     purpose: string;
-    evidentiary_role: string;
   }>;
+  scaffold_plan: {
+    reflection_prompt_count: number;
+    checklist_count: number;
+    checkpoint_count: number;
+    hint_count: number;
+  };
 };
 ```
 
-### What To Validate At This Stage
+## Stage 3: Context And Instructions
 
-- archetype matches request
-- difficulty and time budget match request
-- category and tags are specific enough
-- artifact count respects the request profile
-- required artifact kinds are present
-- artifact purposes are not redundant
-- the context does not already give away the answer
-- the artifact plan actually supports the scenario
+This model call writes only:
 
-### Typical Failure Modes
-
-- context is too vague to support a real investigation
-- context already names the likely root cause
-- artifact plan is too thin
-- artifacts do not connect cleanly to the intended challenge
-- category is just the specialty name again
-
-## Stage 2: Full Draft Package
-
-Only once the skeleton is good enough should SteerLab generate the full `DraftChallengePackage`.
-
-This stage should use:
-
-- the original `GenerationRequest`
-- the selected `SpecialtyPack`
-- the approved `ScenarioSkeleton`
-
-This stage fills in:
-
-- artifact contents
+- short description
+- one context paragraph
 - candidate instructions
+
+Constraints:
+
+- short output
+- max 3 candidate instructions
+- no artifact content
+- no evaluation signals
+- no training scaffolds
+
+## Stage 4: Artifact Blueprinting
+
+This stage defines what each artifact should prove.
+
+Each artifact blueprint contains:
+
+- slot id
+- path
+- kind
+- purpose
+- evidentiary role
+- clue
+
+In `fast` mode, this can be generated procedurally.
+In `full` mode, it is a dedicated model call.
+
+## Stage 5: Per-Artifact Generation
+
+Each artifact is generated independently with a type-specific prompt.
+
+Examples:
+
+- log generator
+- config generator
+- markdown field report generator
+- trace generator
+
+This is one of the key optimizations for local models:
+
+- each call is small
+- retries are cheap
+- artifact prompts can be specialized by kind
+
+## Stage 6: Evaluation And Training Bundle
+
+This model call writes only:
+
 - evaluation signals
-- optional rubric
-- training support
+- reflection prompts
+- thinking checklist
+- checkpoints
+- hints
 
-### Why This Helps
+SteerLab controls the counts and output shape procedurally.
 
-It separates two different kinds of work:
+This keeps the prompt narrow and avoids asking the model to re-author the whole challenge.
 
-- scenario design
-- challenge authoring
+## Stage 7: Procedural Assembly
 
-That makes it easier to answer:
+SteerLab assembles the final `DraftChallengePackage` procedurally from:
 
-- is the idea bad?
-- or is the artifact/scaffold authoring bad?
+- request
+- pack
+- skeleton
+- context block
+- artifact blueprints
+- artifact contents
+- evaluation/training bundle
 
-## Optional Later Split
+This means the model is no longer responsible for:
 
-If SteerLab needs even tighter control later, generation can split further:
-
-1. `ScenarioSkeleton`
-2. `ArtifactPlan`
-3. `ArtifactBundle`
-4. `ResponseScaffolds`
-5. `DraftChallengePackage`
-
-That is not necessary yet, but it is a natural extension if artifact quality becomes the main bottleneck.
+- package metadata
+- repeated structural fields
+- file layout
+- copying artifact refs correctly
 
 ## Validation Between Stages
 
-Staged generation only helps if each stage is validated before the next one.
+Each stage should be inspectable and locally debuggable.
 
-Recommended sequence:
+The current implementation persists:
 
-1. generate skeleton
-2. validate skeleton
-3. repair or regenerate skeleton if needed
-4. generate full draft from approved skeleton
-5. validate full draft
-6. optional one-pass repair
-7. stage into review if promotable
+- raw prompts and responses under `generated/raw/<run-id>/`
+- intermediate stage outputs under `generated/pipeline/<run-id>/`
+- validated drafts under `generated/drafts/<run-id>/`
 
-## Repair Policy In A Staged Pipeline
+Recommended flow:
 
-The current repair policy still applies:
+1. generate seed
+2. build skeleton procedurally
+3. generate context block
+4. generate or derive artifact blueprints
+5. generate each artifact independently
+6. generate evaluation bundle
+7. assemble full draft procedurally
+8. validate full draft
+9. optionally run one repair pass
+10. stage into review if promotable
 
-- one generation pass
-- at most one automatic repair pass
-- then stop
+## Why This Helps Local Models
 
-In a staged system, this becomes:
+This design works better with smaller local models because it:
 
-- one repair pass per stage at most
-- but do not repeatedly repair a weak stage forever
+- minimizes context passed into each call
+- minimizes output length for each call
+- avoids full-schema dumps where possible
+- isolates retries to the weak stage
+- moves deterministic scaffolding out of the model
 
-If a skeleton is still weak after one bounded repair, regenerate the skeleton instead of repeatedly sanding it.
+## Entry Point
 
-If a full draft is still weak after one bounded repair, regenerate from a stronger skeleton instead of repeatedly rewriting the same package.
+The current entry point is:
 
-## Why This Fits Local Models Better
+```bash
+npm run generate:challenge -- scripts/generation/example-request-embedded.yaml --pack specialties/embedded/pack.yaml --model qwen3.5:4b --mode fast
+```
 
-Staged generation is especially useful for smaller or slower local models because it:
-
-- reduces prompt size
-- reduces output size
-- reduces reasoning sprawl
-- reduces chance of partial incoherence
-- makes retries cheaper
-
-This is particularly important when using models that:
-
-- produce verbose reasoning traces
-- are slow on long outputs
-- struggle to keep scenario, artifacts, and scaffolds aligned in one pass
-
-## Immediate Next Implementation Goal
-
-The next practical implementation step should be:
-
-1. define `ScenarioSkeleton` in the generation spec
-2. add a skeleton-generation script
-3. add a skeleton validator
-4. add a `skeleton -> draft` generation step
-
-That is enough to make staged generation real without overbuilding the pipeline.
+This is now the recommended path for small-model challenge generation experiments.
