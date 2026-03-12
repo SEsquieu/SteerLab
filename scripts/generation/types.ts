@@ -120,6 +120,7 @@ export type DraftChallengeDefinition = {
 };
 
 export type DraftChallengePackage = {
+  run_id?: string;
   challenge_id: string;
   request_ref: string;
   specialty_pack_ref: string;

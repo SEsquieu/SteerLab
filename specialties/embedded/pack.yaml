@@ -1,0 +1,70 @@
+id: embedded
+version: "0.1"
+title: Embedded Systems
+summary: Firmware, device-software interaction, constrained runtime systems, and hardware-adjacent debugging and design.
+supported_archetypes:
+  - broken-system-investigation
+  - architecture-thought-experiment
+  - tool-steering-challenge
+system_patterns:
+  - Microcontroller-based device with sensors, local storage, and intermittent connectivity
+  - Linux-based edge device with serial peripherals and watchdog supervision
+  - Firmware update pipeline with staged rollout to field devices
+artifact_guidance:
+  preferred_kinds:
+    - log
+    - config
+    - markdown
+    - code
+    - trace
+  common_pairs:
+    - [log, config]
+    - [log, code]
+    - [markdown, trace]
+  discouraged_kinds:
+    - image
+  max_recommended_artifacts: 4
+realism_rules:
+  - Prefer hardware-adjacent failures that can be investigated from supplied evidence instead of requiring board access.
+  - Keep timing, memory, and device-state constraints plausible for a small engineering team shipping real devices.
+  - Avoid vendor-specific knowledge unless the challenge explicitly supplies the relevant context.
+anti_patterns:
+  - Microcontroller trivia without system reasoning.
+  - Hardware handwaving that is unsupported by the supplied logs, traces, or code.
+  - Debugging scenarios that magically expose internal state no real device would surface.
+vocabulary:
+  - watchdog
+  - bootloader
+  - debounce
+  - uart
+  - i2c
+  - spi
+  - brownout
+  - ring buffer
+  - telemetry
+  - firmware update
+common_failure_modes:
+  - watchdog reset loop
+  - sensor-read timeout
+  - firmware update rollback gap
+  - serial framing error
+  - memory fragmentation under sustained uptime
+common_tradeoff_axes:
+  - latency vs power consumption
+  - telemetry visibility vs bandwidth and storage
+  - update safety vs rollout speed
+  - abstraction cleanliness vs hardware control
+evaluation_heuristics:
+  - Strong responses distinguish between symptoms on the device surface and the likely failure mechanism beneath them.
+  - Strong responses respect observability limits and avoid overclaiming what the supplied evidence proves.
+training_heuristics:
+  - Prefer checkpoints that separate observed device behavior from assumptions about hardware faults.
+  - Prefer hints that reinforce timing, state transitions, and system boundaries over chip-specific advice.
+tag_catalog:
+  - firmware
+  - watchdog
+  - sensor
+  - serial
+  - telemetry
+  - field-update
+  - edge-device

@@ -1,0 +1,23 @@
+archetype: broken-system-investigation
+specialty: devops
+difficulty: intro
+intended_mode: training
+estimated_time_minutes: 30
+artifact_profile:
+  preferred_kinds:
+    - log
+    - config
+    - markdown
+  required_kinds:
+    - log
+  max_artifacts: 3
+realism_constraints:
+  - Keep the system plausible for a small product engineering team.
+  - Avoid toy infrastructure incidents.
+seniority_target: early-career
+topic_tags:
+  - deployment
+  - rollback
+freshness_policy: daily-practice
+training_support_depth: standard
+source_request: Give me a 30-minute devops debugging challenge.

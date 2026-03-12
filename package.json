@@ -8,6 +8,11 @@
     "build": "npm --prefix apps/runner run build",
     "preview": "npm --prefix apps/runner run preview",
     "validate:challenges": "node scripts/validate-challenges.mjs",
-    "generate:scaffold-draft": "node scripts/generation/scaffold-draft.mjs"
+    "generate:scaffold-draft": "node scripts/generation/scaffold-draft.mjs",
+    "generate:ollama-draft": "node scripts/generation/ollama-draft.mjs",
+    "generate:extract-raw-draft": "node scripts/generation/extract-raw-draft.mjs",
+    "generate:promote-draft": "node scripts/generation/promote-draft.mjs",
+    "generate:validate-draft": "node scripts/generation/validate-draft.mjs",
+    "generate:repair-draft": "node scripts/generation/repair-draft.mjs"
   }
 }
