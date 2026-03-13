@@ -249,6 +249,13 @@ It is:
 
 The goal is to make the staged pipeline trustworthy for review workflows before broadening provider support or generation volume.
 
+Current implementation note:
+
+- the staged pipeline itself is the active direction
+- default local-model runs are usable enough for iteration
+- the newer Ollama API-backed Qwen tuning path is currently unstable on some runs and is being debugged actively
+- until that stabilizes, treat generation settings experiments as pipeline-development work rather than as settled operating guidance
+
 ## Entry Point
 
 The current entry point is:

@@ -259,6 +259,12 @@ npm run generate:challenge -- scripts/generation/example-request-embedded.yaml -
 
 This flow splits generation into narrow stages, persists intermediate artifacts, records per-stage timing, and keeps deterministic assembly inside SteerLab.
 
+Current note:
+
+- the staged local-generation pipeline is active work
+- default local runs are viable, but the newer Ollama API-backed Qwen tuning path is currently unstable on some runs and is being debugged actively
+- generated drafts should still be treated as review candidates, not trusted curated content
+
 Current generation-quality work includes:
 
 - parser hardening for verbose small-model outputs that mix reasoning and final JSON

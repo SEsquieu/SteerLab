@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import {
   buildValidationReport,
@@ -47,11 +48,26 @@ function parseArgs(argv) {
     provider: "ollama",
     mode: "full",
     autoRepair: false,
+    think: null,
+    hideThinking: false,
+    host: null,
+    temperature: null,
+    topP: null,
+    topK: null,
+    minP: null,
+    presencePenalty: null,
+    repetitionPenalty: null,
   };
   const positional = [];
 
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
+
+    if (token.startsWith("--hidethinking=") || token.startsWith("--hide-thinking=")) {
+      const [, rawValue] = token.split("=", 2);
+      options.hideThinking = ["true", "1", "yes", "on"].includes(String(rawValue).trim().toLowerCase());
+      continue;
+    }
 
     if (token === "--model") {
       options.model = argv[index + 1] ?? options.model;
@@ -61,6 +77,12 @@ function parseArgs(argv) {
 
     if (token === "--provider") {
       options.provider = argv[index + 1] ?? options.provider;
+      index += 1;
+      continue;
+    }
+
+    if (token === "--host" || token === "--ollama-host") {
+      options.host = argv[index + 1] ?? options.host;
       index += 1;
       continue;
     }
@@ -82,6 +104,59 @@ function parseArgs(argv) {
       continue;
     }
 
+    if (token === "--think") {
+      options.think = argv[index + 1] ?? options.think;
+      index += 1;
+      continue;
+    }
+
+    if (token === "--temperature") {
+      options.temperature = Number(argv[index + 1]);
+      index += 1;
+      continue;
+    }
+
+    if (token === "--top-p") {
+      options.topP = Number(argv[index + 1]);
+      index += 1;
+      continue;
+    }
+
+    if (token === "--top-k") {
+      options.topK = Number(argv[index + 1]);
+      index += 1;
+      continue;
+    }
+
+    if (token === "--min-p") {
+      options.minP = Number(argv[index + 1]);
+      index += 1;
+      continue;
+    }
+
+    if (token === "--presence-penalty") {
+      options.presencePenalty = Number(argv[index + 1]);
+      index += 1;
+      continue;
+    }
+
+    if (token === "--repetition-penalty") {
+      options.repetitionPenalty = Number(argv[index + 1]);
+      index += 1;
+      continue;
+    }
+
+    if (token === "--hidethinking" || token === "--hide-thinking") {
+      const nextToken = String(argv[index + 1] ?? "").trim().toLowerCase();
+      if (["true", "false", "1", "0", "yes", "no", "on", "off"].includes(nextToken)) {
+        options.hideThinking = ["true", "1", "yes", "on"].includes(nextToken);
+        index += 1;
+      } else {
+        options.hideThinking = true;
+      }
+      continue;
+    }
+
     positional.push(token);
   }
 
@@ -93,8 +168,51 @@ function parseArgs(argv) {
     options.packPath = positional[1];
   }
 
+  if (options.model === "qwen3.5:4b" && positional.length > 2) {
+    options.model = positional[2];
+  }
+
+  if (options.mode === "full" && positional.length > 3) {
+    options.mode = positional[3];
+  }
+
+  const trailingPositionals = positional.slice(4).map((token) => String(token).trim());
+
+  if (options.think === null) {
+    const thinkToken = trailingPositionals.find((token) =>
+      ["true", "false", "low", "medium", "high"].includes(token.toLowerCase()));
+    if (thinkToken) {
+      options.think = thinkToken;
+    }
+  }
+
+  if (!options.hideThinking) {
+    options.hideThinking = trailingPositionals.some((token) =>
+      ["hidethinking", "hide-thinking", "hide_thinking"].includes(token.toLowerCase()));
+  }
+
+  const numericPositionals = trailingPositionals.filter((token) => /^-?\d+(?:\.\d+)?$/.test(token));
+  if (options.temperature === null && numericPositionals.length > 0) {
+    options.temperature = Number(numericPositionals[0]);
+  }
+  if (options.topP === null && numericPositionals.length > 1) {
+    options.topP = Number(numericPositionals[1]);
+  }
+  if (options.topK === null && numericPositionals.length > 2) {
+    options.topK = Number(numericPositionals[2]);
+  }
+  if (options.minP === null && numericPositionals.length > 3) {
+    options.minP = Number(numericPositionals[3]);
+  }
+  if (options.presencePenalty === null && numericPositionals.length > 4) {
+    options.presencePenalty = Number(numericPositionals[4]);
+  }
+  if (options.repetitionPenalty === null && numericPositionals.length > 5) {
+    options.repetitionPenalty = Number(numericPositionals[5]);
+  }
+
   if (!options.requestPath) {
-    fail("Usage: node scripts/generation/generate-challenge.mjs <request.yaml> --pack <pack.yaml> [--provider ollama] [--model qwen3.5:4b] [--mode fast|full] [--auto-repair]");
+    fail("Usage: node scripts/generation/generate-challenge.mjs <request.yaml> --pack <pack.yaml> [--provider ollama] [--model qwen3.5:4b] [--mode fast|full] [--think false|low|medium|high] [--hide-thinking true|false] [--temperature N] [--top-p N] [--top-k N] [--min-p N] [--presence-penalty N] [--repetition-penalty N] [--auto-repair]");
   }
 
   if (!options.packPath) {
@@ -117,10 +235,46 @@ function buildPipelineDir(runId) {
   return path.join(rootDir, "generated", "pipeline", runId);
 }
 
+function createSessionLogger(pipelineDir) {
+  const sessionLogPath = path.join(pipelineDir, "session.log");
+
+  function formatTimestamp() {
+    return new Date().toISOString();
+  }
+
+  function append(line) {
+    fs.appendFileSync(sessionLogPath, `${line}\n`, "utf8");
+  }
+
+  return {
+    sessionLogPath,
+    line(message) {
+      append(`[${formatTimestamp()}] ${message}`);
+    },
+    stageStart(name, detail = "") {
+      append(`[${formatTimestamp()}] START ${name}${detail ? ` | ${detail}` : ""}`);
+    },
+    stageComplete(name, durationMs, detail = "") {
+      append(
+        `[${formatTimestamp()}] DONE  ${name} | ${Math.round(durationMs)}ms${detail ? ` | ${detail}` : ""}`,
+      );
+    },
+    stageFail(name, error) {
+      append(`[${formatTimestamp()}] FAIL  ${name} | ${error.message ?? error}`);
+    },
+  };
+}
+
 function writeStageYaml(pipelineDir, stageName, fileName, value) {
   const stageDir = path.join(pipelineDir, "stages", stageName);
   ensureDirectory(stageDir);
   writeYamlFile(path.join(stageDir, fileName), value);
+}
+
+function writeStageStatus(pipelineDir, stageName, status) {
+  const stageDir = path.join(pipelineDir, "stages", stageName);
+  ensureDirectory(stageDir);
+  writeYamlFile(path.join(stageDir, "stage-status.yaml"), status);
 }
 
 function normalizeArtifactKinds(seedArtifactPlan, request) {
@@ -449,9 +603,19 @@ async function main() {
   const runId = fallbackRunId(request);
   const pipelineDir = buildPipelineDir(runId);
   ensureDirectory(pipelineDir);
+  const session = createSessionLogger(pipelineDir);
   const provider = createProvider({
     provider: options.provider,
     model: options.model,
+    think: options.think,
+    hideThinking: options.hideThinking,
+    host: options.host,
+    temperature: options.temperature,
+    topP: options.topP,
+    topK: options.topK,
+    minP: options.minP,
+    presencePenalty: options.presencePenalty,
+    repetitionPenalty: options.repetitionPenalty,
   });
   const timing = createTimingCollector();
 
@@ -461,14 +625,63 @@ async function main() {
     provider: options.provider,
     model: options.model,
     mode: options.mode,
+    think: options.think,
+    hide_thinking: options.hideThinking,
+    host: options.host ?? "default",
+    temperature: options.temperature,
+    top_p: options.topP,
+    top_k: options.topK,
+    min_p: options.minP,
+    presence_penalty: options.presencePenalty,
+    repetition_penalty: options.repetitionPenalty,
     created_at: new Date().toISOString(),
     pack_path: options.packPath.replace(/\\/g, "/"),
     request_path: options.requestPath.replace(/\\/g, "/"),
+    session_log: path.relative(rootDir, session.sessionLogPath).replace(/\\/g, "/"),
   });
+  session.line(`Pipeline created for run ${runId}`);
+  session.line(`Provider=${options.provider} model=${options.model} mode=${options.mode} think=${options.think ?? "default"} hideThinking=${options.hideThinking}`);
+  session.line(`Sampling temperature=${options.temperature ?? "default"} top_p=${options.topP ?? "default"} top_k=${options.topK ?? "default"} min_p=${options.minP ?? "default"} presence_penalty=${options.presencePenalty ?? "default"} repetition_penalty=${options.repetitionPenalty ?? "default"}`);
+  session.line(`Request=${options.requestPath.replace(/\\/g, "/")} pack=${options.packPath.replace(/\\/g, "/")}`);
 
-  const seed = await timing.measure(stageNames.seed, async () => {
+  async function runStage(stageName, detail, handler) {
+    const startedAt = new Date().toISOString();
+    writeStageStatus(pipelineDir, stageName, {
+      status: "running",
+      started_at: startedAt,
+      detail,
+    });
+    session.stageStart(stageName, detail);
+    console.log(`Starting ${stageName}${detail ? ` | ${detail}` : ""}`);
+
+    try {
+      const result = await timing.measure(stageName, handler);
+      const stageTiming = timing.latest(stageName);
+      writeStageStatus(pipelineDir, stageName, {
+        status: "completed",
+        started_at: startedAt,
+        finished_at: new Date().toISOString(),
+        duration_ms: stageTiming?.duration_ms ?? null,
+        detail,
+      });
+      session.stageComplete(stageName, stageTiming?.duration_ms ?? 0, detail);
+      return result;
+    } catch (error) {
+      writeStageStatus(pipelineDir, stageName, {
+        status: "failed",
+        started_at: startedAt,
+        finished_at: new Date().toISOString(),
+        detail,
+        error: error.message ?? String(error),
+      });
+      session.stageFail(stageName, error);
+      throw error;
+    }
+  }
+
+  const seed = await runStage(stageNames.seed, "Generate seed", async () => {
     const prompt = buildSeedPrompt({ request, pack, mode: options.mode });
-    const result = provider.generateObject({
+    const result = await provider.generateObject({
       runId,
       stageName: stageNames.seed,
       prompt,
@@ -477,7 +690,7 @@ async function main() {
   });
   writeStageYaml(pipelineDir, stageNames.seed, "seed.yaml", seed);
 
-  const skeletonEnvelope = await timing.measure(stageNames.skeleton, async () =>
+  const skeletonEnvelope = await runStage(stageNames.skeleton, "Build procedural skeleton", async () =>
     buildSkeletonFromSeed({
       seed,
       request,
@@ -487,13 +700,13 @@ async function main() {
     }));
   writeStageYaml(pipelineDir, stageNames.skeleton, "skeleton.yaml", skeletonEnvelope.scenario_skeleton);
 
-  const contextBlock = await timing.measure(stageNames.context, async () => {
+  const contextBlock = await runStage(stageNames.context, "Generate description, context, instructions", async () => {
     const prompt = buildContextPrompt({
       request,
       skeleton: skeletonEnvelope.scenario_skeleton,
       pack,
     });
-    const result = provider.generateObject({
+    const result = await provider.generateObject({
       runId,
       stageName: stageNames.context,
       prompt,
@@ -503,7 +716,7 @@ async function main() {
   });
   writeStageYaml(pipelineDir, stageNames.context, "context.yaml", contextBlock);
 
-  const artifactBlueprints = await timing.measure(stageNames.artifactPlan, async () => {
+  const artifactBlueprints = await runStage(stageNames.artifactPlan, options.mode === "fast" ? "Build procedural artifact plan" : "Generate artifact plan", async () => {
     if (options.mode === "fast") {
       const blueprints = buildProceduralArtifactBlueprints(skeletonEnvelope.scenario_skeleton);
       validateArtifactBlueprints(blueprints, skeletonEnvelope.scenario_skeleton);
@@ -515,7 +728,7 @@ async function main() {
       skeleton: skeletonEnvelope.scenario_skeleton,
       pack,
     });
-    const result = provider.generateObject({
+    const result = await provider.generateObject({
       runId,
       stageName: stageNames.artifactPlan,
       prompt,
@@ -526,10 +739,11 @@ async function main() {
   });
   writeStageYaml(pipelineDir, stageNames.artifactPlan, "artifact-plan.yaml", { artifacts: artifactBlueprints });
 
-  const artifactContents = await timing.measure(stageNames.artifacts, async () => {
+  const artifactContents = await runStage(stageNames.artifacts, `Generate ${skeletonEnvelope.scenario_skeleton.artifact_slots.length} artifact(s)`, async () => {
     const contents = [];
 
     for (const artifact of skeletonEnvelope.scenario_skeleton.artifact_slots) {
+      session.line(`  artifact ${artifact.path} | kind=${artifact.kind}`);
       const blueprint = artifactBlueprints.find((entry) => entry.path === artifact.path);
       const prompt = buildArtifactPrompt({
         request,
@@ -538,7 +752,7 @@ async function main() {
         artifact,
         pack,
       });
-      const result = provider.generateObject({
+      const result = await provider.generateObject({
         runId,
         stageName: `${stageNames.artifacts}-${slugify(artifact.path)}`,
         prompt,
@@ -552,7 +766,7 @@ async function main() {
   });
   writeStageYaml(pipelineDir, stageNames.artifacts, "artifact-contents.yaml", { artifacts: artifactContents });
 
-  const evaluationBundle = await timing.measure(stageNames.evaluation, async () => {
+  const evaluationBundle = await runStage(stageNames.evaluation, "Generate evaluation and training bundle", async () => {
     const prompt = buildEvaluationPrompt({
       request,
       skeleton: skeletonEnvelope.scenario_skeleton,
@@ -560,7 +774,7 @@ async function main() {
       pack,
       mode: options.mode,
     });
-    const result = provider.generateObject({
+    const result = await provider.generateObject({
       runId,
       stageName: stageNames.evaluation,
       prompt,
@@ -600,6 +814,8 @@ async function main() {
   const timings = timing.finish();
   writeYamlFile(path.join(pipelineDir, "timings.yaml"), timings);
   writeYamlFile(path.join(pipelineDir, "final-validation.yaml"), validationReport);
+  session.line(`Validation result | structural=${validationReport.structural_status} semantic=${validationReport.semantic_status} recommendation=${validationReport.overall_recommendation}`);
+  session.line(`Total duration | ${Math.round(timings.total_duration_ms)}ms`);
 
   console.log(`Generated staged pipeline artifacts under ${path.relative(rootDir, pipelineDir)}`);
   console.log(`Wrote validated draft to ${path.relative(rootDir, draftDir)}`);

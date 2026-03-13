@@ -14,6 +14,14 @@ export function createTimingCollector() {
       });
       return value;
     },
+    latest(name) {
+      for (let index = stages.length - 1; index >= 0; index -= 1) {
+        if (stages[index].name === name) {
+          return stages[index];
+        }
+      }
+      return null;
+    },
     finish() {
       const totalDurationMs = stages.reduce((sum, stage) => sum + stage.duration_ms, 0);
       return {

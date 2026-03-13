@@ -204,17 +204,66 @@ ${JSON.stringify(
 
 function artifactTypeInstructions(kind) {
   const instructions = {
-    log: "Write a concise realistic log excerpt with timestamps and 6-10 lines.",
-    config: "Write a concise config excerpt with only the fields relevant to the issue.",
-    yaml: "Write a concise YAML config excerpt with only relevant fields.",
-    json: "Write a concise JSON config excerpt with only relevant fields.",
-    markdown: "Write a short field report or incident note in markdown, max 120 words.",
-    trace: "Write a short trace excerpt with timing or state transitions.",
-    text: "Write a short plain-text artifact, max 120 words.",
-    code: "Write a small code/config snippet, max 25 lines.",
+    log: "Write a realistic machine or service log excerpt with timestamps and 6-8 lines. Do not explain the log.",
+    config: "Write a minimal config excerpt with only 4-8 relevant fields. Do not add comments unless essential.",
+    yaml: "Write a minimal YAML config excerpt with only 4-8 relevant fields. Do not add prose.",
+    json: "Write a minimal JSON config excerpt with only relevant keys. Do not add prose.",
+    markdown: "Write a short operational note in markdown, max 80 words. Keep it factual, not analytical.",
+    trace: "Write a short trace excerpt with timing or state transitions only.",
+    text: "Write a short plain-text operational note, max 80 words.",
+    code: "Write a small code or config snippet, max 20 lines.",
   };
 
   return instructions[kind] ?? instructions.text;
+}
+
+function artifactTypeNegativeRules(kind) {
+  const rules = {
+    log: [
+      "do not summarize what the log means",
+      "do not mention root cause explicitly",
+      "do not write prose paragraphs",
+    ],
+    config: [
+      "do not wrap config in explanation",
+      "do not include unrelated sections",
+      "do not add placeholders",
+    ],
+    yaml: [
+      "do not wrap YAML in explanation",
+      "do not include unrelated sections",
+      "do not add placeholders",
+    ],
+    json: [
+      "do not wrap JSON in explanation",
+      "do not add example keys unrelated to the clue",
+      "do not add placeholders",
+    ],
+    markdown: [
+      "do not introduce IDs, version tags, regions, hostnames, or service names unless they already appear in the scenario or blueprint",
+      "do not claim evidence not visible in the other artifacts",
+      "do not turn the note into a diagnosis",
+    ],
+    text: [
+      "do not introduce IDs, version tags, regions, hostnames, or service names unless they already appear in the scenario or blueprint",
+      "do not claim evidence not visible in the other artifacts",
+      "do not turn the note into a diagnosis",
+    ],
+  };
+
+  return rules[kind] ?? [
+    "do not add explanation outside the artifact content",
+    "do not introduce unsupported specifics",
+  ];
+}
+
+function compactArtifactPackHints(pack, kind) {
+  return {
+    system_patterns: (pack.system_patterns ?? []).slice(0, 3),
+    common_failure_modes: (pack.common_failure_modes ?? []).slice(0, 3),
+    realism_rules: (pack.realism_rules ?? []).slice(0, 3),
+    artifact_guidance: pack.artifact_guidance?.[kind] ?? pack.artifact_guidance?.default ?? null,
+  };
 }
 
 export function buildArtifactPrompt({ request, skeleton, blueprint, artifact, pack }) {
@@ -242,12 +291,12 @@ Rules:
 - make the artifact realistic
 - make the clue visible but not fully self-explaining
 - keep the content narrowly tied to the scenario
+- ${artifactTypeNegativeRules(artifact.kind).join("\n- ")}
 
 Request:
 ${JSON.stringify(
     {
       specialty: request.specialty,
-      intended_mode: request.intended_mode,
       difficulty: request.difficulty,
     },
     null,
@@ -259,7 +308,7 @@ ${JSON.stringify(
     {
       title: skeleton.challenge_outline.title,
       issue_class: skeleton.issue_class,
-      context: skeleton.challenge_outline.context,
+      context: skeleton.challenge_outline.context.split(/\s+/).slice(0, 28).join(" "),
     },
     null,
     2,
@@ -269,15 +318,7 @@ Artifact blueprint:
 ${JSON.stringify(blueprint, null, 2)}
 
 Pack hints:
-${JSON.stringify(
-    {
-      system_patterns: pack.system_patterns ?? [],
-      common_failure_modes: pack.common_failure_modes ?? [],
-      realism_rules: pack.realism_rules ?? [],
-    },
-    null,
-    2,
-  )}
+${JSON.stringify(compactArtifactPackHints(pack, artifact.kind), null, 2)}
 `.trim();
 }
 
