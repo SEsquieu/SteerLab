@@ -294,6 +294,87 @@ function validateArtifactContentResult(result, expectedPath) {
   }
 }
 
+function normalizeArtifactPath(candidatePath, expectedPath) {
+  if (typeof candidatePath !== "string" || candidatePath.trim().length === 0) {
+    return null;
+  }
+
+  const normalizedCandidate = candidatePath.trim().replace(/\\/g, "/");
+  const normalizedExpected = expectedPath.replace(/\\/g, "/");
+
+  if (normalizedCandidate === normalizedExpected) {
+    return normalizedExpected;
+  }
+
+  if (path.basename(normalizedCandidate) === path.basename(normalizedExpected)) {
+    return normalizedExpected;
+  }
+
+  return null;
+}
+
+function unwrapArtifactCandidate(candidate, expectedPath) {
+  if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
+    return null;
+  }
+
+  if (typeof candidate.content !== "string" || candidate.content.trim().length === 0) {
+    return null;
+  }
+
+  const normalizedPath = normalizeArtifactPath(candidate.path, expectedPath);
+  if (!normalizedPath) {
+    return null;
+  }
+
+  return {
+    path: normalizedPath,
+    content: candidate.content,
+  };
+}
+
+function normalizeArtifactContentResult(result, expectedPath) {
+  const direct = unwrapArtifactCandidate(result, expectedPath);
+  if (direct) {
+    return direct;
+  }
+
+  const wrappedArtifact = unwrapArtifactCandidate(result?.artifact, expectedPath);
+  if (wrappedArtifact) {
+    return wrappedArtifact;
+  }
+
+  if (Array.isArray(result?.artifacts) && result.artifacts.length === 1) {
+    const singleArtifact = unwrapArtifactCandidate(result.artifacts[0], expectedPath);
+    if (singleArtifact) {
+      return singleArtifact;
+    }
+  }
+
+  if (result?.artifacts && typeof result.artifacts === "object" && !Array.isArray(result.artifacts)) {
+    const normalizedExpected = expectedPath.replace(/\\/g, "/");
+    const expectedBasename = path.basename(normalizedExpected);
+
+    for (const [artifactKey, artifactValue] of Object.entries(result.artifacts)) {
+      if (typeof artifactValue !== "string" || artifactValue.trim().length === 0) {
+        continue;
+      }
+
+      const normalizedKey = normalizeArtifactPath(artifactKey, expectedPath);
+      if (!normalizedKey && artifactKey !== expectedBasename) {
+        continue;
+      }
+
+      return {
+        path: normalizedExpected,
+        content: artifactValue,
+      };
+    }
+  }
+
+  return result;
+}
+
 function assembleDraftPackage({
   runId,
   request,
@@ -462,8 +543,9 @@ async function main() {
         stageName: `${stageNames.artifacts}-${slugify(artifact.path)}`,
         prompt,
       });
-      validateArtifactContentResult(result.parsed, artifact.path);
-      contents.push(result.parsed);
+      const normalizedArtifact = normalizeArtifactContentResult(result.parsed, artifact.path);
+      validateArtifactContentResult(normalizedArtifact, artifact.path);
+      contents.push(normalizedArtifact);
     }
 
     return contents;

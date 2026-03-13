@@ -580,6 +580,120 @@ function genericInstructionPattern(value) {
   return /\b(review|examine|analyze|identify|determine|consider|assess)\b/i.test(value);
 }
 
+const SEMANTIC_STOPWORDS = new Set([
+  "about",
+  "after",
+  "against",
+  "align",
+  "allows",
+  "along",
+  "also",
+  "analyze",
+  "artifact",
+  "artifacts",
+  "assess",
+  "before",
+  "between",
+  "business",
+  "candidate",
+  "change",
+  "changes",
+  "check",
+  "compare",
+  "confirm",
+  "consider",
+  "cross",
+  "crossreference",
+  "current",
+  "default",
+  "deployment",
+  "detect",
+  "determine",
+  "during",
+  "error",
+  "errors",
+  "event",
+  "examine",
+  "extract",
+  "failure",
+  "files",
+  "following",
+  "hours",
+  "identify",
+  "incident",
+  "latest",
+  "limit",
+  "limits",
+  "logic",
+  "match",
+  "matching",
+  "persist",
+  "point",
+  "policy",
+  "policies",
+  "post",
+  "provide",
+  "recent",
+  "reduce",
+  "reductions",
+  "review",
+  "rollback",
+  "service",
+  "signals",
+  "specific",
+  "spikes",
+  "summary",
+  "timeout",
+  "timeouts",
+  "timestamp",
+  "timestamps",
+  "understand",
+  "using",
+  "validate",
+  "verification",
+  "verify",
+  "window",
+  "windows",
+]);
+
+const ASSERTION_CERTAINTY_MARKERS = [
+  "shows",
+  "indicates",
+  "confirms",
+  "reveals",
+  "lists",
+  "contains",
+  "matches",
+];
+
+const SPECULATIVE_MARKERS = [
+  "may",
+  "might",
+  "could",
+  "consider",
+  "investigate",
+  "assess",
+  "whether",
+  "possible",
+  "potential",
+  "suggests",
+];
+
+const STATUS_TERMS = new Set([
+  "success",
+  "successful",
+  "failed",
+  "failure",
+  "blocked",
+  "disabled",
+  "enabled",
+  "aborted",
+  "pending",
+  "stuck",
+  "active",
+  "inactive",
+]);
+
 function normalizeText(value) {
   return String(value ?? "").toLowerCase();
 }
@@ -822,8 +936,8 @@ export function buildValidationReport({ draftPackage, request, pack }) {
       }
     }
 
-    if (isNonEmptyString(artifact.path)) {
-      if (!artifact.path.startsWith("artifacts/")) {
+      if (isNonEmptyString(artifact.path)) {
+        if (!artifact.path.startsWith("artifacts/")) {
         collectIssue(issues, {
           stage: "structural",
           severity: "error",
@@ -831,10 +945,21 @@ export function buildValidationReport({ draftPackage, request, pack }) {
           message: `Artifact path must live under artifacts/: ${artifact.path}`,
           field: `artifacts[${index}].path`,
         });
+        }
+        runtimeMap.set(artifact.path, artifact);
       }
-      runtimeMap.set(artifact.path, artifact);
-    }
-  });
+
+      if (typeof artifact.content === "string" && artifact.content.includes("\\n") && !artifact.content.includes("\n")) {
+        collectIssue(issues, {
+          stage: "semantic",
+          severity: "warning",
+          code: "artifact-escaped-newlines",
+          message: `Artifact ${artifact.path} contains escaped newline sequences instead of real line breaks.`,
+          field: `artifacts[${index}].content`,
+          suggested_action: "Normalize escaped newlines before writing the artifact to disk.",
+        });
+      }
+    });
 
   for (const [artifactPath, suppliedArtifact] of suppliedMap.entries()) {
     const runtimeArtifact = runtimeMap.get(artifactPath);
@@ -1090,8 +1215,8 @@ export function buildValidationReport({ draftPackage, request, pack }) {
       });
     }
 
-    challenge.candidate_instructions?.forEach((instruction, index) => {
-      if (genericInstructionPattern(instruction) && !artifactPattern.test(instruction)) {
+      challenge.candidate_instructions?.forEach((instruction, index) => {
+        if (genericInstructionPattern(instruction) && !artifactPattern.test(instruction)) {
         collectIssue(issues, {
           stage: "semantic",
           severity: "warning",
@@ -1099,11 +1224,31 @@ export function buildValidationReport({ draftPackage, request, pack }) {
           message: `Candidate instruction ${index + 1} is generic and weakly grounded.`,
           field: `challenge_definition.candidate_instructions[${index}]`,
         });
-      }
-    });
-  }
+        }
+      });
+    }
 
-  if (Array.isArray(challenge.tags) && challenge.tags.length === 0) {
+    validateReferencedArtifactSupport(
+      issues,
+      challenge.candidate_instructions,
+      "challenge_definition.candidate_instructions",
+      runtimeArtifacts,
+    );
+    validateReferencedArtifactSupport(
+      issues,
+      challenge.evaluation_signals,
+      "challenge_definition.evaluation_signals",
+      runtimeArtifacts,
+    );
+    validateUnsupportedAssertedEvidence(
+      issues,
+      challenge.evaluation_signals,
+      "challenge_definition.evaluation_signals",
+      runtimeArtifacts,
+    );
+    validateNarrativeArtifactConsistency(issues, runtimeArtifacts);
+
+    if (Array.isArray(challenge.tags) && challenge.tags.length === 0) {
     collectIssue(issues, {
       stage: "semantic",
       severity: "warning",
@@ -1113,8 +1258,8 @@ export function buildValidationReport({ draftPackage, request, pack }) {
     });
   }
 
-  if (request?.intended_mode === "training" && challenge.training_support) {
-    const trainingSupport = challenge.training_support;
+    if (request?.intended_mode === "training" && challenge.training_support) {
+      const trainingSupport = challenge.training_support;
     const trainingDepth = request.training_support_depth ?? "standard";
     const trainingScaffoldCount = [
       ...(trainingSupport.reflection_prompts ?? []),
@@ -1133,8 +1278,8 @@ export function buildValidationReport({ draftPackage, request, pack }) {
       });
     }
 
-    trainingSupport.hints?.forEach((hint, index) => {
-      if (isLeadingHint(hint.content)) {
+      trainingSupport.hints?.forEach((hint, index) => {
+        if (isLeadingHint(hint.content)) {
         collectIssue(issues, {
           stage: "semantic",
           severity: "warning",
@@ -1142,10 +1287,30 @@ export function buildValidationReport({ draftPackage, request, pack }) {
           message: `Hint ${index + 1} may give away too much of the causal chain.`,
           field: `challenge_definition.training_support.hints[${index}].content`,
           suggested_action: "Rewrite the hint to steer investigation rather than naming the likely answer.",
-        });
-      }
-    });
-  }
+          });
+        }
+      });
+
+      validateReferencedArtifactSupport(
+        issues,
+        trainingSupport.checkpoints?.map((checkpoint) => checkpoint.prompt),
+        "challenge_definition.training_support.checkpoints",
+        runtimeArtifacts,
+      );
+      validateUnsupportedAssertedEvidence(
+        issues,
+        trainingSupport.checkpoints?.map((checkpoint) => checkpoint.prompt),
+        "challenge_definition.training_support.checkpoints",
+        runtimeArtifacts,
+      );
+      validateUnsupportedAssertedEvidence(
+        issues,
+        trainingSupport.hints?.map((hint) => hint.content),
+        "challenge_definition.training_support.hints",
+        runtimeArtifacts,
+        { limit: 1 },
+      );
+    }
 
   const structuralStatus = hasIssueSeverity(issues.filter((issue) => issue.stage === "structural"), "error")
     ? "fail"
@@ -1258,7 +1423,7 @@ export function writeDraft(rootDir, envelope, inputPath) {
 
     const artifactPath = path.join(outputDir, artifact.path);
     ensureDirectory(path.dirname(artifactPath));
-    fs.writeFileSync(artifactPath, String(artifact.content ?? ""), "utf8");
+    fs.writeFileSync(artifactPath, normalizeArtifactContentForWrite(artifact), "utf8");
   }
 
   return outputDir;
@@ -1300,44 +1465,48 @@ export function extractJsonObject(text) {
       return anchored;
     }
 
-    const candidates = extractBalancedJsonCandidates(cleaned);
+      const candidates = extractBalancedJsonCandidates(cleaned);
 
-    if (candidates.length === 0) {
-      fail("Model output did not contain a parseable JSON object.");
-    }
+      if (candidates.length === 0) {
+        fail("Model output did not contain a parseable JSON object.");
+      }
 
-    let lastError = null;
-    let lastParsedFallback = null;
+      let lastError = null;
+      const parsedCandidates = [];
 
-    for (let index = candidates.length - 1; index >= 0; index -= 1) {
-      const candidate = candidates[index];
+      for (let index = candidates.length - 1; index >= 0; index -= 1) {
+        const candidate = candidates[index];
 
-      try {
-        const parsed = JSON.parse(candidate);
-        if (looksLikeDraftChallengePackage(parsed)) {
-          return {
+        try {
+          const parsed = JSON.parse(candidate);
+          if (looksLikeDraftChallengePackage(parsed)) {
+            return {
+              parsed,
+              candidate,
+            };
+          }
+
+          parsedCandidates.push({
             parsed,
+            candidate,
+            reverse_index: candidates.length - index,
+          });
+        } catch (error) {
+          lastError = {
+            message: error.message,
             candidate,
           };
         }
+      }
 
-        if (!lastParsedFallback) {
-          lastParsedFallback = {
-            parsed,
-            candidate,
-          };
-        }
-      } catch (error) {
-        lastError = {
-          message: error.message,
-          candidate,
+      if (parsedCandidates.length > 0) {
+        parsedCandidates.sort((left, right) =>
+          scoreJsonCandidate(right) - scoreJsonCandidate(left));
+        return {
+          parsed: parsedCandidates[0].parsed,
+          candidate: parsedCandidates[0].candidate,
         };
       }
-    }
-
-    if (lastParsedFallback) {
-      return lastParsedFallback;
-    }
 
     if (lastError) {
       const context = buildJsonErrorContext(lastError.candidate, lastError.message);
@@ -1348,57 +1517,367 @@ export function extractJsonObject(text) {
   }
 }
 
+function normalizeSemanticToken(value) {
+  let normalized = normalizeText(value).replace(/[^a-z0-9_]+/g, "");
+  if (normalized.endsWith("ies") && normalized.length > 4) {
+    normalized = `${normalized.slice(0, -3)}y`;
+  } else if (normalized.endsWith("s") && normalized.length > 4 && !normalized.endsWith("ss")) {
+    normalized = normalized.slice(0, -1);
+  }
+  return normalized;
+}
+
+function tokenizeMeaningfulTerms(value) {
+  return normalizeText(value)
+    .split(/[^a-z0-9_]+/)
+    .map((token) => normalizeSemanticToken(token))
+    .filter((token) => token.length >= 4 && !SEMANTIC_STOPWORDS.has(token));
+}
+
+function collectSpecificReferences(value) {
+  const references = new Set();
+  const directMatches = [
+    ...String(value ?? "").matchAll(/`([^`]+)`/g),
+    ...String(value ?? "").matchAll(/\b[a-z0-9]+(?:[_-][a-z0-9]+)+\b/gi),
+    ...String(value ?? "").matchAll(/\b[a-z0-9._/-]+\.(?:ya?ml|json|md|txt|log)\b/gi),
+  ];
+
+  directMatches.forEach((match) => {
+    const raw = String(match[1] ?? match[0] ?? "").trim();
+    const normalized = normalizeText(raw);
+    if (normalized.length >= 4) {
+      references.add(normalized);
+    }
+  });
+
+  return Array.from(references);
+}
+
+function artifactReferenceNames(artifactPath) {
+  const normalizedPath = artifactPath.replace(/\\/g, "/");
+  const base = path.basename(normalizedPath);
+  return [
+    normalizedPath.toLowerCase(),
+    base.toLowerCase(),
+    path.basename(base, path.extname(base)).toLowerCase(),
+  ];
+}
+
+function resolveReferencedArtifacts(text, runtimeArtifacts) {
+  const normalizedText = normalizeText(text);
+  return runtimeArtifacts.filter((artifact) =>
+    artifactReferenceNames(artifact.path).some((name) => name && normalizedText.includes(name)));
+}
+
+function countTokenOverlap(text, tokens) {
+  const haystack = normalizeText(text);
+  return tokens.filter((token) => haystack.includes(token)).length;
+}
+
+function normalizeArtifactContentForWrite(artifact) {
+  const content = String(artifact.content ?? "");
+  if (!["log", "markdown", "text", "trace", "code"].includes(artifact.kind)) {
+    return content;
+  }
+
+  if (!content.includes("\\n") || content.includes("\n")) {
+    return content;
+  }
+
+  return content
+    .replace(/\\r\\n/g, "\n")
+    .replace(/\\n/g, "\n")
+    .replace(/\\t/g, "\t");
+}
+
+function validateReferencedArtifactSupport(issues, items, fieldPrefix, runtimeArtifacts) {
+  items?.forEach((item, index) => {
+    if (!isNonEmptyString(item)) {
+      return;
+    }
+
+    const referencedArtifacts = resolveReferencedArtifacts(item, runtimeArtifacts);
+    if (referencedArtifacts.length === 0) {
+      return;
+    }
+
+    const tokens = tokenizeMeaningfulTerms(item)
+      .filter((token) => !artifactReferenceNames(referencedArtifacts[0].path).includes(token));
+
+    if (tokens.length < 2) {
+      return;
+    }
+
+    const supported = referencedArtifacts.some((artifact) => countTokenOverlap(artifact.content, tokens) >= 2);
+    if (!supported) {
+      collectIssue(issues, {
+        stage: "semantic",
+        severity: "warning",
+        code: "artifact-reference-weak-support",
+        message: `Item ${index + 1} references an artifact, but its supporting terms are weakly grounded in that artifact.`,
+        field: `${fieldPrefix}[${index}]`,
+        suggested_action: "Rewrite the item to match evidence actually present in the referenced artifact.",
+      });
+    }
+  });
+}
+
+function validateNarrativeArtifactConsistency(issues, runtimeArtifacts) {
+  runtimeArtifacts.forEach((artifact) => {
+    if (!["markdown", "text"].includes(artifact.kind)) {
+      return;
+    }
+
+    const corroboratingContent = runtimeArtifacts
+      .filter((otherArtifact) => otherArtifact.path !== artifact.path)
+      .map((otherArtifact) => normalizeText(otherArtifact.content))
+      .join("\n");
+
+    const specificReferences = collectSpecificReferences(artifact.content);
+    const unsupported = specificReferences.filter((reference) => {
+      const artifactNames = artifactReferenceNames(artifact.path);
+      if (artifactNames.includes(reference)) {
+        return false;
+      }
+      return !corroboratingContent.includes(reference);
+    });
+
+    if (unsupported.length > 0) {
+      collectIssue(issues, {
+        stage: "semantic",
+        severity: "warning",
+        code: "artifact-cross-reference-drift",
+        message: `Artifact ${artifact.path} introduces specific references not corroborated elsewhere in the bundle: ${unsupported.slice(0, 3).join(", ")}.`,
+        field: `artifacts.${artifact.path}.content`,
+        suggested_action: "Align narrative artifact claims with evidence present in the other supplied artifacts.",
+      });
+    }
+  });
+}
+
+function isHighConfidenceAssertion(value) {
+  const normalized = normalizeText(value);
+  return ASSERTION_CERTAINTY_MARKERS.some((marker) => normalized.includes(marker))
+    && !SPECULATIVE_MARKERS.some((marker) => normalized.includes(marker));
+}
+
+function collectAssertedClaimAnchors(value) {
+  const raw = String(value ?? "");
+  const anchors = new Set();
+
+  for (const match of raw.matchAll(/`([^`]+)`/g)) {
+    const token = normalizeText(match[1]);
+    if (token.length >= 3) {
+      anchors.add(token);
+    }
+  }
+
+  for (const match of raw.matchAll(/\b(?:exit code|status|version)\s+[a-z0-9_.-]+\b/gi)) {
+    anchors.add(normalizeText(match[0]));
+  }
+
+  for (const match of raw.matchAll(/\b[a-z0-9]+(?:[_-][a-z0-9]+)+\b/gi)) {
+    const token = normalizeText(match[0]);
+    if (token.length >= 4) {
+      anchors.add(token);
+    }
+  }
+
+  for (const match of raw.matchAll(/\b\d+(?:\.\d+)?\b/g)) {
+    anchors.add(match[0]);
+  }
+
+  const meaningfulTerms = tokenizeMeaningfulTerms(raw)
+    .filter((token) => STATUS_TERMS.has(token) || token.includes("_") || /\d/.test(token));
+
+  meaningfulTerms.forEach((token) => anchors.add(token));
+
+  return Array.from(anchors);
+}
+
+function isSupportedAssertedClaim(value, runtimeArtifacts) {
+  if (!isHighConfidenceAssertion(value)) {
+    return true;
+  }
+
+  const anchors = collectAssertedClaimAnchors(value);
+  if (anchors.length === 0) {
+    return true;
+  }
+
+  const bundleText = runtimeArtifacts.map((artifact) => normalizeText(artifact.content)).join("\n");
+  const supportedAnchorCount = anchors.filter((anchor) => bundleText.includes(anchor)).length;
+
+  if (supportedAnchorCount === anchors.length) {
+    return true;
+  }
+
+  if (anchors.length >= 3 && supportedAnchorCount >= 2) {
+    return true;
+  }
+
+  return false;
+}
+
+function validateUnsupportedAssertedEvidence(issues, items, fieldPrefix, runtimeArtifacts, { limit = 2 } = {}) {
+  let warningCount = 0;
+
+  items?.forEach((item, index) => {
+    if (warningCount >= limit || !isNonEmptyString(item)) {
+      return;
+    }
+
+    if (isSupportedAssertedClaim(item, runtimeArtifacts)) {
+      return;
+    }
+
+    collectIssue(issues, {
+      stage: "semantic",
+      severity: "warning",
+      code: "unsupported-asserted-evidence",
+      message: `Item ${index + 1} makes a concrete evidence claim that is not supported by the supplied artifacts.`,
+      field: `${fieldPrefix}[${index}]`,
+      suggested_action: "Remove the unsupported assertion or add corroborating evidence to the artifact bundle.",
+    });
+    warningCount += 1;
+  });
+}
+
+function scoreJsonCandidate(entry) {
+  const metrics = collectJsonCandidateMetrics(entry.parsed);
+
+  return (
+    metrics.substantiveTextLength * 2
+    + metrics.substantiveStringCount * 120
+    + metrics.richStringCount * 240
+    + metrics.objectCount * 15
+    + metrics.arrayCount * 10
+    + metrics.maxStringLength
+    - metrics.placeholderCount * 400
+    - metrics.emptyValueCount * 120
+    + entry.reverse_index * 25
+  );
+}
+
+function collectJsonCandidateMetrics(value) {
+  const metrics = {
+    placeholderCount: 0,
+    emptyValueCount: 0,
+    substantiveStringCount: 0,
+    richStringCount: 0,
+    substantiveTextLength: 0,
+    maxStringLength: 0,
+    objectCount: 0,
+    arrayCount: 0,
+  };
+
+  walkJsonCandidate(value, metrics);
+  return metrics;
+}
+
+function walkJsonCandidate(value, metrics) {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+
+    if (trimmed.length === 0) {
+      metrics.emptyValueCount += 1;
+      return;
+    }
+
+    metrics.maxStringLength = Math.max(metrics.maxStringLength, trimmed.length);
+
+    if (looksLikePlaceholderString(trimmed)) {
+      metrics.placeholderCount += 1;
+      return;
+    }
+
+    metrics.substantiveStringCount += 1;
+    metrics.substantiveTextLength += trimmed.length;
+
+    if (trimmed.length >= 40 || trimmed.includes("\n")) {
+      metrics.richStringCount += 1;
+    }
+
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    metrics.arrayCount += 1;
+    if (value.length === 0) {
+      metrics.emptyValueCount += 1;
+      return;
+    }
+
+    value.forEach((item) => walkJsonCandidate(item, metrics));
+    return;
+  }
+
+  if (value && typeof value === "object") {
+    metrics.objectCount += 1;
+    const entries = Object.entries(value);
+
+    if (entries.length === 0) {
+      metrics.emptyValueCount += 1;
+      return;
+    }
+
+    entries.forEach(([, nestedValue]) => walkJsonCandidate(nestedValue, metrics));
+    return;
+  }
+
+  if (value === null || value === undefined) {
+    metrics.emptyValueCount += 1;
+  }
+}
+
+function looksLikePlaceholderString(value) {
+  const normalized = value.trim().toLowerCase();
+
+  if (!normalized) {
+    return true;
+  }
+
+  const exactPlaceholders = new Set([
+    "string",
+    "number",
+    "boolean",
+    "object",
+    "array",
+    "null",
+  ]);
+
+  if (exactPlaceholders.has(normalized)) {
+    return true;
+  }
+
+  if (/^(one|short|max|concise|valid json)\b/.test(normalized)) {
+    return true;
+  }
+
+  if (/^path to /.test(normalized)) {
+    return true;
+  }
+
+  if (normalized === "string[]" || normalized === "[string]") {
+    return true;
+  }
+
+  return false;
+}
+
 function extractBalancedJsonCandidates(text) {
-  let depth = 0;
-  let start = -1;
-  let inString = false;
-  let escaped = false;
   const candidates = [];
+  const seenCandidates = new Set();
 
   for (let index = 0; index < text.length; index += 1) {
-    const char = text[index];
-
-    if (inString) {
-      if (escaped) {
-        escaped = false;
-        continue;
-      }
-
-      if (char === "\\") {
-        escaped = true;
-        continue;
-      }
-
-      if (char === "\"") {
-        inString = false;
-      }
-
+    if (text[index] !== "{") {
       continue;
     }
 
-    if (char === "\"") {
-      inString = true;
-      continue;
-    }
-
-    if (char === "{") {
-      if (depth === 0) {
-        start = index;
-      }
-      depth += 1;
-      continue;
-    }
-
-    if (char === "}") {
-      if (depth === 0) {
-        continue;
-      }
-
-      depth -= 1;
-      if (depth === 0 && start !== -1) {
-        candidates.push(text.slice(start, index + 1));
-        start = -1;
-      }
+    const candidate = extractFirstBalancedObjectFrom(text, index);
+    if (candidate && !seenCandidates.has(candidate)) {
+      candidates.push(candidate);
+      seenCandidates.add(candidate);
     }
   }
 
