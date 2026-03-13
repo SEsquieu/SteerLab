@@ -24,6 +24,10 @@ Status: active.
 - document common evaluation signals and failure modes
 - keep the challenge corpus grounded and non-gimmicky
 
+Active note:
+
+- curated challenge growth still matters, but the immediate focus has shifted toward improving generated-draft quality and review gates before expanding the curated library quickly
+
 ## Phase 2: Richer Artifact Support
 
 Status: not started in a serious way.
@@ -56,7 +60,7 @@ Status: partially complete.
 
 ## Phase 4: Model Integration And Reasoning Trace Capture
 
-Status: architecture defined, implementation largely open.
+Status: staged generation is active; provider surface is still intentionally narrow.
 
 - define a model-agnostic provider abstraction
 - separate scenario generation, coaching, and candidate tool interaction as distinct roles
@@ -64,10 +68,18 @@ Status: architecture defined, implementation largely open.
 - define the generation-request, specialty-pack, validation, and promotion boundaries for future challenge generation
 - split generation into staged passes so scenario framing and evidence design can be validated before full draft authoring
 - define the report and decision artifacts that connect generation, validation, repair, and promotion
+- harden parsing for verbose small-model outputs and partial wrapper drift
+- strengthen semantic validation so generated drafts are judged on evidence integrity rather than schema compliance alone
 - support optional coaching for Training Mode under explicit pedagogical constraints
 - define authentic candidate-model trace capture for Evaluation Mode
 - study privacy, consent, and misuse risks around trace capture
 - distinguish disciplined steering from superficial tool theatrics
+
+Current active work inside this phase:
+
+- benchmark `generate:challenge` across specialties and archetypes using small local models
+- tune semantic warnings to stay broad and evidence-focused rather than pack-specific
+- improve repair usefulness before widening provider or UI surface area
 
 ## Phase 4B: Replay And Review
 

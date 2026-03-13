@@ -205,6 +205,15 @@ The current implementation persists:
 - intermediate stage outputs under `generated/pipeline/<run-id>/`
 - validated drafts under `generated/drafts/<run-id>/`
 
+The current validator layer also checks more than schema shape. It now includes:
+
+- parser recovery for verbose reasoning-first model outputs
+- normalization for common per-artifact wrapper shapes
+- semantic warnings for weak artifact grounding
+- semantic warnings for cross-artifact narrative drift
+- semantic warnings for unsupported asserted evidence in evaluation and training scaffolds
+- normalization of escaped newline-heavy text artifacts before writing draft files
+
 Recommended flow:
 
 1. generate seed
@@ -227,6 +236,18 @@ This design works better with smaller local models because it:
 - avoids full-schema dumps where possible
 - isolates retries to the weak stage
 - moves deterministic scaffolding out of the model
+
+## Current Active Work
+
+The active implementation focus is not adding broad new architecture surface.
+
+It is:
+
+- measuring stage quality across specialties
+- tightening validation honesty
+- improving repair targeting for drafts marked `repair`
+
+The goal is to make the staged pipeline trustworthy for review workflows before broadening provider support or generation volume.
 
 ## Entry Point
 

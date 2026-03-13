@@ -259,11 +259,29 @@ npm run generate:challenge -- scripts/generation/example-request-embedded.yaml -
 
 This flow splits generation into narrow stages, persists intermediate artifacts, records per-stage timing, and keeps deterministic assembly inside SteerLab.
 
+Current generation-quality work includes:
+
+- parser hardening for verbose small-model outputs that mix reasoning and final JSON
+- per-artifact normalization for common wrapper shapes returned by local models
+- semantic validation for weak artifact grounding, cross-artifact drift, and unsupported asserted evidence
+- text artifact normalization so generated logs and notes land on disk in a readable form
+
 The current seed library includes:
 
 - 3 Broken System Investigation challenges
 - 3 Architecture Thought Experiment challenges
 - 3 Tool Steering Challenge scenarios
+
+## Active Work
+
+Current active work is centered on the staged `generate:challenge` pipeline for small local models.
+
+Near-term focus:
+
+- measure generation quality across specialties and archetypes
+- tune semantic validation so it catches unsupported specifics without collapsing the problem space into narrow templates
+- improve repair targeting based on validator output
+- keep curated `challenges/` separate from generated review candidates
 
 For new challenge authoring:
 
@@ -306,11 +324,11 @@ Start here:
 
 Near-term:
 
-- expand the open challenge library
+- improve generated-draft quality and validator honesty for the staged local-model pipeline
+- benchmark generation across specialties and archetypes before widening provider surface area
 - deepen Training Mode without turning it into generic tutorialware
 - improve artifact rendering and challenge navigation
 - refine reviewer guidance and evaluation workflows
-- define the first practical boundaries for optional model integration and trace capture
 
 Longer-term:
 
