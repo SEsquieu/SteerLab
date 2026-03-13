@@ -28,6 +28,10 @@ const repairableFields = new Set([
   "challenge_definition.training_support.hints",
 ]);
 
+function isRepairableField(field) {
+  return repairableFields.has(field) || /^artifacts\..+\.content$/.test(field);
+}
+
 function parseArgs(argv) {
   const options = {
     model: "qwen3.5:4b",
@@ -95,10 +99,25 @@ function runOllama(model, prompt) {
 }
 
 function getByPath(object, dottedPath) {
+  if (dottedPath.startsWith("artifacts.")) {
+    const artifactPath = dottedPath.slice("artifacts.".length, -".content".length);
+    return object.artifacts.find((artifact) => artifact.path === artifactPath)?.content;
+  }
+
   return dottedPath.split(".").reduce((current, segment) => current?.[segment], object);
 }
 
 function setByPath(object, dottedPath, value) {
+  if (dottedPath.startsWith("artifacts.")) {
+    const artifactPath = dottedPath.slice("artifacts.".length, -".content".length);
+    const artifact = object.artifacts.find((entry) => entry.path === artifactPath);
+    if (!artifact) {
+      fail(`Repair patch referenced unknown artifact field: ${dottedPath}`);
+    }
+    artifact.content = value;
+    return;
+  }
+
   const segments = dottedPath.split(".");
   let current = object;
 
@@ -169,7 +188,9 @@ function selectRepairTargets(validationReport) {
       continue;
     }
 
-    const normalizedField = issue.field.replace(/\[\d+\](\.[^.]+)?$/, (match) => {
+    const normalizedField = issue.field.startsWith("artifacts.")
+      ? issue.field
+      : issue.field.replace(/\[\d+\](\.[^.]+)?$/, (match) => {
       if (match.startsWith("[")) {
         const suffix = match.replace(/^\[\d+\]/, "");
         return suffix;
@@ -177,7 +198,11 @@ function selectRepairTargets(validationReport) {
       return match;
     });
 
-    for (const candidate of repairableFields) {
+    const candidates = issue.field.startsWith("artifacts.")
+      ? [normalizedField]
+      : repairableFields;
+
+    for (const candidate of candidates) {
       if (normalizedField === candidate || normalizedField.startsWith(`${candidate}[`) || normalizedField.startsWith(`${candidate}.`)) {
         if (!fieldMap.has(candidate)) {
           fieldMap.set(candidate, []);
@@ -281,7 +306,7 @@ function applyPatch(draftPackage, patch) {
   const nextDraftPackage = JSON.parse(JSON.stringify(draftPackage));
 
   for (const [field, value] of Object.entries(patch)) {
-    if (!repairableFields.has(field)) {
+    if (!isRepairableField(field)) {
       fail(`Repair patch attempted to change a non-repairable field: ${field}`);
     }
 

@@ -1164,6 +1164,8 @@ export function buildValidationReport({ draftPackage, request, pack }) {
     });
   }
 
+  validateNarrativeAssertions(issues, challenge, runtimeArtifacts);
+
   if (Array.isArray(challenge.evaluation_signals) && challenge.evaluation_signals.length < 2) {
     collectIssue(issues, {
       stage: "semantic",
@@ -1604,11 +1606,26 @@ function validateReferencedArtifactSupport(issues, items, fieldPrefix, runtimeAr
     const tokens = tokenizeMeaningfulTerms(item)
       .filter((token) => !artifactReferenceNames(referencedArtifacts[0].path).includes(token));
 
-    if (tokens.length < 2) {
+    if (tokens.length < 3) {
       return;
     }
 
-    const supported = referencedArtifacts.some((artifact) => countTokenOverlap(artifact.content, tokens) >= 2);
+    const supported = referencedArtifacts.some((artifact) => {
+      const overlapCount = countTokenOverlap(artifact.content, tokens);
+      if (overlapCount >= 2) {
+        return true;
+      }
+
+      const normalizedContent = normalizeText(artifact.content);
+      const configHint =
+        normalizedContent.includes("timeout")
+        || normalizedContent.includes("memory")
+        || normalizedContent.includes("watchdog")
+        || normalizedContent.includes("config")
+        || normalizedContent.includes("threshold");
+
+      return overlapCount >= 1 && configHint;
+    });
     if (!supported) {
       collectIssue(issues, {
         stage: "semantic",
@@ -1623,6 +1640,10 @@ function validateReferencedArtifactSupport(issues, items, fieldPrefix, runtimeAr
 }
 
 function validateNarrativeArtifactConsistency(issues, runtimeArtifacts) {
+  const knownArtifactReferences = new Set(
+    runtimeArtifacts.flatMap((artifact) => artifactReferenceNames(artifact.path)),
+  );
+
   runtimeArtifacts.forEach((artifact) => {
     if (!["markdown", "text"].includes(artifact.kind)) {
       return;
@@ -1637,6 +1658,9 @@ function validateNarrativeArtifactConsistency(issues, runtimeArtifacts) {
     const unsupported = specificReferences.filter((reference) => {
       const artifactNames = artifactReferenceNames(artifact.path);
       if (artifactNames.includes(reference)) {
+        return false;
+      }
+      if (knownArtifactReferences.has(reference)) {
         return false;
       }
       return !corroboratingContent.includes(reference);
@@ -1741,6 +1765,64 @@ function validateUnsupportedAssertedEvidence(issues, items, fieldPrefix, runtime
     });
     warningCount += 1;
   });
+}
+
+function collectFramingSpecifics(value) {
+  const specifics = new Set();
+  const raw = String(value ?? "");
+
+  for (const match of raw.matchAll(/\b[a-z0-9._/-]+\.(?:ya?ml|json|md|txt|log)\b/gi)) {
+    specifics.add(normalizeText(match[0]));
+  }
+
+  for (const match of raw.matchAll(/\b(kernel panics?|boot corruption|bootloader|heap allocation|memory fragmentation|sensor-read|firmware load|payload arrival)\b/gi)) {
+    specifics.add(normalizeText(match[0]));
+  }
+
+  return Array.from(specifics);
+}
+
+function validateUnsupportedFramingSpecifics(issues, value, field, runtimeArtifacts) {
+  if (!isNonEmptyString(value)) {
+    return;
+  }
+
+  const bundleText = runtimeArtifacts.map((artifact) => normalizeText(artifact.content)).join("\n");
+  const specifics = collectFramingSpecifics(value);
+
+  if (specifics.length === 0) {
+    return;
+  }
+
+  const unsupported = specifics.filter((specific) => !bundleText.includes(specific));
+
+  if (unsupported.length === 0) {
+    return;
+  }
+
+  collectIssue(issues, {
+    stage: "semantic",
+    severity: "warning",
+    code: "unsupported-framing-specifics",
+    message: `Framing introduces specific claims not corroborated by the artifact bundle: ${unsupported.slice(0, 3).join(", ")}.`,
+    field,
+    suggested_action: "Soften the framing or add corroborating evidence to the artifacts.",
+  });
+}
+
+function validateNarrativeAssertions(issues, challenge, runtimeArtifacts) {
+  validateUnsupportedFramingSpecifics(
+    issues,
+    challenge.description,
+    "challenge_definition.description",
+    runtimeArtifacts,
+  );
+  validateUnsupportedFramingSpecifics(
+    issues,
+    challenge.context,
+    "challenge_definition.context",
+    runtimeArtifacts,
+  );
 }
 
 function scoreJsonCandidate(entry) {
